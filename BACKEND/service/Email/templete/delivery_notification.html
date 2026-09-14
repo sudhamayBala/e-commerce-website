@@ -1,0 +1,68 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+
+<h1>Your order is on the way! 🚚</h1>
+
+<p>
+    Hello <strong>{{ username }}</strong>,
+</p>
+
+<p>
+    Great news! Your order has been shipped and is
+    currently on its way to you.
+</p>
+
+<div class="status info">
+    🚚 Order Shipped
+</div>
+
+<div class="info-box">
+
+    <div class="info-row">
+        <span class="label">Order ID</span>
+        <span class="value">{{ order_id }}</span>
+    </div>
+
+    <div class="info-row">
+        <span class="label">Courier</span>
+        <span class="value">{{ courier_name }}</span>
+    </div>
+
+    <div class="info-row">
+        <span class="label">Tracking ID</span>
+        <span class="value">{{ tracking_id }}</span>
+    </div>
+
+    <div class="info-row">
+        <span class="label">Expected Delivery</span>
+        <span class="value">{{ expected_delivery }}</span>
+    </div>
+
+</div>
+
+<div class="date-time">
+    Notification generated on:
+    <strong>{{ notification_date }}</strong>
+    at
+    <strong>{{ notification_time }}</strong>
+</div>
+
+<div class="button-container">
+
+    <a href="{{ tracking_url }}" class="button">
+        Track My Order
+    </a>
+
+</div>
+
+<p>
+    Thank you for shopping with us!
+</p>
+
+<p>
+    Cheers!<br>
+    <strong>The E-Commerce Team</strong>
+</p>
+
+{% endblock %}

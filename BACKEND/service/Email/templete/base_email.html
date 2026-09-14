@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>{{ email_title }}</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f4f7fb;
+            font-family: Arial, Helvetica, sans-serif;
+            color: #1f2937;
+        }
+
+        .wrapper {
+            width: 100%;
+            padding: 40px 15px;
+        }
+
+        .container {
+            max-width: 620px;
+            margin: auto;
+            background: #ffffff;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        /* HEADER */
+
+        .header {
+            background: #111827;
+            padding: 28px;
+            text-align: center;
+        }
+
+        .logo {
+            color: #ffffff;
+            font-size: 26px;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .tagline {
+            color: #d1d5db;
+            font-size: 13px;
+            margin-top: 7px;
+        }
+
+        /* CONTENT */
+
+        .content {
+            padding: 40px;
+        }
+
+        .content h1 {
+            margin: 0 0 15px;
+            font-size: 26px;
+            color: #111827;
+        }
+
+        .content h2 {
+            font-size: 20px;
+            color: #111827;
+        }
+
+        .content p {
+            font-size: 15px;
+            line-height: 1.7;
+            color: #4b5563;
+        }
+
+        /* INFO BOX */
+
+        .info-box {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 25px 0;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .label {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .value {
+            font-weight: bold;
+            color: #111827;
+            font-size: 14px;
+        }
+
+        /* BUTTON */
+
+        .button-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .button {
+            display: inline-block;
+            background: #2563eb;
+            color: #ffffff !important;
+            text-decoration: none;
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: bold;
+        }
+
+        .button:hover {
+            background: #1d4ed8;
+        }
+
+        /* STATUS */
+
+        .status {
+            text-align: center;
+            padding: 18px;
+            border-radius: 10px;
+            margin: 25px 0;
+            font-weight: bold;
+        }
+
+        .success {
+            background: #ecfdf5;
+            color: #047857;
+        }
+
+        .warning {
+            background: #fffbeb;
+            color: #b45309;
+        }
+
+        .danger {
+            background: #fef2f2;
+            color: #b91c1c;
+        }
+
+        .info {
+            background: #eff6ff;
+            color: #1d4ed8;
+        }
+
+        /* DATE */
+
+        .date-time {
+            text-align: center;
+            margin: 20px 0;
+            color: #6b7280;
+            font-size: 13px;
+        }
+
+        /* FOOTER */
+
+        .footer {
+            background: #f9fafb;
+            border-top: 1px solid #e5e7eb;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .footer p {
+            margin: 6px 0;
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        .footer a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        /* MOBILE */
+
+        @media screen and (max-width: 600px) {
+
+            .wrapper {
+                padding: 15px 8px;
+            }
+
+            .content {
+                padding: 25px 20px;
+            }
+
+            .content h1 {
+                font-size: 22px;
+            }
+
+            .info-row {
+                display: block;
+            }
+
+            .value {
+                display: block;
+                margin-top: 5px;
+            }
+
+            .button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="wrapper">
+
+    <div class="container">
+
+        <!-- HEADER -->
+
+        <div class="header">
+
+            <div class="logo">
+                {{ store_name }}
+            </div>
+
+            <div class="tagline">
+                Quality products. Great shopping experience.
+            </div>
+
+        </div>
+
+
+        <!-- MAIN CONTENT -->
+
+        <div class="content">
+
+            {% block content %}
+            {% endblock %}
+
+        </div>
+
+
+        <!-- FOOTER -->
+
+        <div class="footer">
+
+            <p>
+                © {{ current_year }} {{ store_name }}.
+                All rights reserved.
+            </p>
+
+            <p>
+                <a href="{{ website_url }}">
+                    Visit Website
+                </a>
+
+                &nbsp; | &nbsp;
+
+                <a href="{{ support_url }}">
+                    Contact Support
+                </a>
+            </p>
+
+            <p>
+                This is an automated email.
+                Please do not reply directly.
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+    /*
+       JavaScript date/time.
+
+       NOTE:
+       Most email clients block JavaScript.
+       This is mainly useful when previewing
+       the template in a browser.
+    */
+
+    function updateDateTime() {
+
+        const element =
+            document.getElementById("currentDateTime");
+
+        if (element) {
+
+            const now = new Date();
+
+            const date = now.toLocaleDateString(
+                "en-IN",
+                {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric"
+                }
+            );
+
+            const time = now.toLocaleTimeString(
+                "en-IN",
+                {
+                    hour: "2-digit",
+                    minute: "2-digit"
+                }
+            );
+
+            element.innerHTML =
+                date + " at " + time;
+        }
+    }
+
+    updateDateTime();
+</script>
+
+</body>
+</html>

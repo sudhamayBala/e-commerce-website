@@ -1,0 +1,73 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+
+<h1>Payment Successful! 🎉</h1>
+
+<p>
+    Hello <strong>{{ username }}</strong>,
+</p>
+
+<p>
+    Your payment has been successfully processed.
+    Thank you for your purchase!
+</p>
+
+<div class="status success">
+    ✓ Payment Successful
+</div>
+
+<div class="info-box">
+
+    <div class="info-row">
+        <span class="label">Order ID</span>
+        <span class="value">{{ order_id }}</span>
+    </div>
+
+    <div class="info-row">
+        <span class="label">Transaction ID</span>
+        <span class="value">{{ transaction_id }}</span>
+    </div>
+
+    <div class="info-row">
+        <span class="label">Amount Paid</span>
+        <span class="value">₹{{ amount }}</span>
+    </div>
+
+    <div class="info-row">
+        <span class="label">Payment Method</span>
+        <span class="value">{{ payment_method }}</span>
+    </div>
+
+</div>
+
+<div class="date-time">
+
+    Payment completed:
+    <strong>
+        {{ payment_date }}
+        at
+        {{ payment_time }}
+    </strong>
+
+</div>
+
+<div class="button-container">
+
+    <a href="{{ order_url }}" class="button">
+        View My Order
+    </a>
+
+</div>
+
+<p>
+    Your order is now being processed.
+    We will notify you when it is shipped.
+</p>
+
+<p>
+    Cheers!<br>
+    <strong>The E-Commerce Team</strong>
+</p>
+
+{% endblock %}

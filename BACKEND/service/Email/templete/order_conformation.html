@@ -1,0 +1,70 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+
+<h1>Order Confirmed! 🎉</h1>
+
+<p>
+    Hello <strong>{{ username }}</strong>,
+</p>
+
+<p>
+    Thank you for your order. We have successfully received
+    your order and it is now being processed.
+</p>
+
+<div class="status success">
+    ✓ Order Confirmed
+</div>
+
+<div class="info-box">
+
+    <div class="info-row">
+        <span class="label">Order ID</span>
+        <span class="value">{{ order_id }}</span>
+    </div>
+
+    <div class="info-row">
+        <span class="label">Order Date</span>
+        <span class="value">{{ order_date }}</span>
+    </div>
+
+    <div class="info-row">
+        <span class="label">Payment Method</span>
+        <span class="value">{{ payment_method }}</span>
+    </div>
+
+    <div class="info-row">
+        <span class="label">Total Amount</span>
+        <span class="value">₹{{ total_amount }}</span>
+    </div>
+
+</div>
+
+<div class="date-time">
+
+    Confirmation Date & Time:
+    <strong>
+        {{ notification_date }} {{ notification_time }}
+    </strong>
+
+</div>
+
+<div class="button-container">
+
+    <a href="{{ order_url }}" class="button">
+        View Order
+    </a>
+
+</div>
+
+<p>
+    We will notify you when your order is shipped.
+</p>
+
+<p>
+    Best regards,<br>
+    <strong>The E-Commerce Team</strong>
+</p>
+
+{% endblock %}

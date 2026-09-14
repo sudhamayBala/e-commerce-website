@@ -1,0 +1,491 @@
+/* =====================================================
+   LOGIN / REGISTER PAGE
+===================================================== */
+
+.login-container {
+    min-height: 100vh;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    padding: 20px;
+
+    box-sizing: border-box;
+
+    background: linear-gradient(
+        135deg,
+        #667eea 0%,
+        #764ba2 100%
+    );
+}
+
+
+/* =====================================================
+   LOGIN / REGISTER CARD
+===================================================== */
+
+.login-card {
+    width: 100%;
+    max-width: 500px;
+
+    padding: 40px;
+
+    box-sizing: border-box;
+
+    background-color: #ffffff;
+
+    border-radius: 16px;
+
+    box-shadow:
+        0 15px 35px rgba(0, 0, 0, 0.2);
+}
+
+
+/* =====================================================
+   TITLE
+===================================================== */
+
+.login-title {
+    margin: 0 0 30px 0;
+
+    text-align: center;
+
+    font-size: 32px;
+
+    font-weight: 700;
+
+    color: #333333;
+}
+
+
+/* =====================================================
+   FORM
+===================================================== */
+
+.login-form {
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+}
+
+
+/* =====================================================
+   INPUT CONTAINER
+===================================================== */
+
+.input-container {
+    width: 100%;
+
+    display: flex;
+
+    align-items: center;
+
+    margin-bottom: 20px;
+}
+
+
+/* =====================================================
+   LABEL
+===================================================== */
+
+.input-container label {
+    width: 100px;
+
+    flex-shrink: 0;
+
+    margin-right: 15px;
+
+    font-size: 15px;
+
+    font-weight: 600;
+
+    color: #333333;
+}
+
+
+/* =====================================================
+   INPUT BOX
+===================================================== */
+
+.input-box {
+    flex: 1;
+
+    width: 100%;
+
+    min-width: 0;
+
+    padding: 12px 15px;
+
+    box-sizing: border-box;
+
+    border: 1px solid #cccccc;
+
+    border-radius: 8px;
+
+    background-color: #ffffff;
+
+    color: #333333;
+
+    font-size: 15px;
+
+    outline: none;
+
+    transition:
+        border-color 0.3s ease,
+        box-shadow 0.3s ease;
+}
+
+
+/* =====================================================
+   INPUT PLACEHOLDER
+===================================================== */
+
+.input-box::placeholder {
+    color: #999999;
+}
+
+
+/* =====================================================
+   INPUT FOCUS
+===================================================== */
+
+.input-box:focus {
+    border-color: #667eea;
+
+    box-shadow:
+        0 0 0 3px rgba(102, 126, 234, 0.15);
+}
+
+
+/* =====================================================
+   LOGIN / REGISTER BUTTON
+===================================================== */
+
+.login-button {
+    width: 100%;
+
+    margin-top: 5px;
+
+    padding: 13px 20px;
+
+    border: none;
+
+    border-radius: 8px;
+
+    background-color: #667eea;
+
+    color: #ffffff;
+
+    font-size: 16px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.3s ease,
+        transform 0.2s ease,
+        box-shadow 0.3s ease;
+}
+
+
+/* =====================================================
+   BUTTON HOVER
+===================================================== */
+
+.login-button:hover {
+    background-color: #5568d9;
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 6px 15px rgba(102, 126, 234, 0.35);
+}
+
+
+/* =====================================================
+   BUTTON ACTIVE
+===================================================== */
+
+.login-button:active {
+    transform: translateY(0);
+
+    box-shadow: none;
+}
+
+
+/* =====================================================
+   SWITCH LOGIN / REGISTER TEXT
+===================================================== */
+
+.switch-text {
+    margin: 22px 0 0 0;
+
+    text-align: center;
+
+    font-size: 14px;
+
+    color: #555555;
+}
+
+
+/* =====================================================
+   SWITCH BUTTON
+===================================================== */
+
+.switch-button {
+    margin-left: 5px;
+
+    padding: 0;
+
+    border: none;
+
+    background: transparent;
+
+    color: #667eea;
+
+    font-size: 14px;
+
+    font-weight: 100%;
+
+    cursor: pointer;
+}
+
+
+/* =====================================================
+   SWITCH BUTTON HOVER
+===================================================== */
+
+.switch-button:hover {
+    color: #5568d9;
+
+    text-decoration: underline;
+}
+
+
+/* =====================================================
+   ERROR MESSAGE
+===================================================== */
+
+.error {
+    width: 100%;
+
+    margin: 20px 0 0 0;
+
+    padding: 12px 15px;
+
+    box-sizing: border-box;
+
+    border-radius: 8px;
+
+    background-color: #ffe5e5;
+
+    color: #d80000;
+
+    text-align: center;
+
+    font-size: 14px;
+
+    line-height: 1.5;
+}
+
+
+/* =====================================================
+   SUCCESS MESSAGE
+===================================================== */
+
+.success {
+    width: 100%;
+
+    margin: 20px 0 0 0;
+
+    padding: 12px 15px;
+
+    box-sizing: border-box;
+
+    border-radius: 8px;
+
+    background-color: #e5ffe9;
+
+    color: #087f23;
+
+    text-align: center;
+
+    font-size: 14px;
+
+    line-height: 1.5;
+}
+
+
+/* =====================================================
+   WELCOME MESSAGE
+===================================================== */
+
+.welcome-message {
+    margin: 20px 0 0 0;
+
+    text-align: center;
+
+    font-size: 18px;
+
+    font-weight: 600;
+
+    color: #333333;
+}
+
+
+/* =====================================================
+   EMAIL / PASSWORD AUTOFILL
+===================================================== */
+
+.input-box:-webkit-autofill {
+    -webkit-text-fill-color: #333333;
+
+    transition:
+        background-color 5000s ease-in-out 0s;
+}
+
+
+/* =====================================================
+   TABLET
+===================================================== */
+
+@media (max-width: 600px) {
+
+    .login-container {
+        padding: 15px;
+    }
+
+
+    .login-card {
+        max-width: 450px;
+
+        padding: 30px 25px;
+    }
+
+
+    .login-title {
+        font-size: 28px;
+
+        margin-bottom: 25px;
+    }
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 480px) {
+
+    .login-container {
+        padding: 10px;
+    }
+
+
+    .login-card {
+        padding: 25px 18px;
+
+        border-radius: 12px;
+    }
+
+
+    .login-title {
+        font-size: 26px;
+
+        margin-bottom: 25px;
+    }
+
+
+    /*
+       On small screens, put the label
+       above the input.
+    */
+
+    .input-container {
+        display: flex;
+
+        flex-direction: column;
+
+        align-items: stretch;
+
+        margin-bottom: 18px;
+    }
+
+
+    .input-container label {
+        width: auto;
+
+        margin-right: 0;
+
+        margin-bottom: 7px;
+    }
+
+
+    .input-box {
+        width: 100%;
+
+        padding: 12px;
+    }
+
+
+    .login-button {
+        padding: 12px;
+    }
+}
+
+
+/* =====================================================
+   VERY SMALL MOBILE
+===================================================== */
+
+@media (max-width: 350px) {
+
+    .login-card {
+        padding: 20px 15px;
+    }
+
+
+    .login-title {
+        font-size: 23px;
+    }
+
+
+    .input-box {
+        font-size: 14px;
+    }
+
+
+    .login-button {
+        font-size: 15px;
+    }
+}
+
+.login-role-switch {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin: -12px 0 24px;
+    padding: 5px;
+    background: #f2f3ee;
+    border-radius: 8px;
+}
+
+.role-button {
+    padding: 10px 8px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #666;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.role-button.active {
+    background: #fff;
+    color: #111;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}

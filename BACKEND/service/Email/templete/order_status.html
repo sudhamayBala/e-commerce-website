@@ -1,0 +1,66 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+
+<h1>Order Status Update 📦</h1>
+
+<p>
+    Hello <strong>{{ username }}</strong>,
+</p>
+
+<p>
+    We have an update regarding your order.
+</p>
+
+<div class="status info">
+    {{ order_status }}
+</div>
+
+<div class="info-box">
+
+    <div class="info-row">
+        <span class="label">Order ID</span>
+        <span class="value">{{ order_id }}</span>
+    </div>
+
+    <div class="info-row">
+        <span class="label">Current Status</span>
+        <span class="value">{{ order_status }}</span>
+    </div>
+
+    <div class="info-row">
+        <span class="label">Updated On</span>
+        <span class="value">{{ status_date }}</span>
+    </div>
+
+</div>
+
+<div class="date-time">
+
+    Status updated:
+    <strong>
+        {{ notification_date }}
+        at
+        {{ notification_time }}
+    </strong>
+
+</div>
+
+<div class="button-container">
+
+    <a href="{{ order_url }}" class="button">
+        View Order Status
+    </a>
+
+</div>
+
+<p>
+    If you have any questions, please contact our support team.
+</p>
+
+<p>
+    Cheers!<br>
+    <strong>The E-Commerce Team</strong>
+</p>
+
+{% endblock %}

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Commerce Email</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f4f6f8;
+            font-family: Arial, Helvetica, sans-serif;
+            color: #333333;
+        }
+
+        .email-wrapper {
+            width: 100%;
+            padding: 40px 15px;
+            box-sizing: border-box;
+        }
+
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Header */
+        .header {
+            background: #111827;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .logo {
+            color: #ffffff;
+            font-size: 26px;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .tagline {
+            color: #d1d5db;
+            font-size: 13px;
+            margin-top: 6px;
+        }
+
+        /* Content */
+        .content {
+            padding: 40px 35px;
+        }
+
+        .content h1 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 26px;
+            color: #111827;
+        }
+
+        .content p {
+            font-size: 15px;
+            line-height: 1.7;
+            color: #4b5563;
+        }
+
+        /* Button */
+        .button-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 14px 28px;
+            background-color: #2563eb;
+            color: #ffffff !important;
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: bold;
+            border-radius: 7px;
+        }
+
+        .button:hover {
+            background-color: #1d4ed8;
+        }
+
+        /* Signature */
+        .signature {
+            margin-top: 30px;
+            color: #4b5563;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* Footer */
+        .footer {
+            background-color: #f9fafb;
+            padding: 25px;
+            text-align: center;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .footer p {
+            margin: 5px 0;
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        .footer a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        /* Mobile */
+        @media screen and (max-width: 600px) {
+            .email-wrapper {
+                padding: 20px 10px;
+            }
+
+            .content {
+                padding: 30px 20px;
+            }
+
+            .content h1 {
+                font-size: 22px;
+            }
+
+            .button {
+                width: 80%;
+                display: block;
+                margin: 0 auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="email-wrapper">
+
+        <div class="email-container">
+
+            <!-- Header -->
+            <div class="header">
+                <div class="logo">
+                    Your E-Commerce
+                </div>
+
+                <div class="tagline">
+                    Quality products. Great shopping experience.
+                </div>
+            </div>
+
+
+            <!-- Main Content -->
+            <div class="content">
+
+                <h1>Hello {{ username }}! 👋</h1>
+
+                <p>
+                    Thank you for shopping with us. We are happy to have you
+                    as part of our growing community.
+                </p>
+
+                <p>
+                    Your request has been successfully processed. You can
+                    continue shopping or visit your account to view your
+                    latest orders and updates.
+                </p>
+
+
+                <!-- CTA Button -->
+                <div class="button-container">
+                    <a href="{{ website_url }}" class="button">
+                        Visit Our Store
+                    </a>
+                </div>
+
+
+                <!-- Signature -->
+                <div class="signature">
+                    <p>
+                        Cheers!<br>
+                        <strong>The E-Commerce Team</strong>
+                    </p>
+                </div>
+
+            </div>
+
+
+            <!-- Footer -->
+            <div class="footer">
+
+                <p>
+                    © 2026 Your E-Commerce. All rights reserved.
+                </p>
+
+                <p>
+                    <a href="{{ website_url }}">Visit Website</a>
+                    &nbsp; | &nbsp;
+                    <a href="{{ support_url }}">Contact Support</a>
+                </p>
+
+                <p>
+                    This is an automated email. Please do not reply directly
+                    to this message.
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</body>
+</html>
