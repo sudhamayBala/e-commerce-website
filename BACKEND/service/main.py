@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 
-# Keep the project root first when this file is run directly.
+                                                             
 if __package__ is None:
     project_root = str(Path(__file__).resolve().parent.parent)
     sys.path.insert(0, project_root)

@@ -1,14 +1,21 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CircleMarker, MapContainer, Popup, TileLayer } from 'react-leaflet'
 import '../../css/RegisterLogin/Home.css'
 import 'leaflet/dist/leaflet.css'
-import { getStoreSettings, saveStoreSettings, formatCurrency } from '../data/storeSettings'
+import { getStoreSettings, saveStoreSettings, formatCurrency } from '../../sharedData/storeSettings'
+import { getErrorMessage } from '../../api/requestError'
+import { createProduct } from '../../api/product/createProduct'
+import { deleteProduct as deleteProductFromDatabase } from '../../api/product/deleteProduct'
+import { getProducts } from '../../api/product/getProducts'
+import { updateProduct } from '../../api/product/updateProduct'
+import { createCategory } from '../../api/category/createCategory'
+import { getCategories } from '../../api/category/getCategories'
 
 export default function Owner({ products, setProducts, orders, setOrders }) {
   const navigate = useNavigate()
   const [activeView, setActiveView] = useState('dashboard')
-  const [productForm, setProductForm] = useState({ name: '', type: '', price: '', stock: '', image: '' })
+  const [productForm, setProductForm] = useState({ name: '', type: '', description: '', price: '', cost_price: '', selling_price: '', stock: '', image: '' })
   const [storeSettings, setStoreSettings] = useState(getStoreSettings)
   const [savedSettings, setSavedSettings] = useState(false)
   const [areaSearch, setAreaSearch] = useState('')
@@ -138,11 +145,76 @@ export default function Owner({ products, setProducts, orders, setOrders }) {
           ? product?.name || item.name || 'Unknown product'
           : productType
       const segment = segments[segmentName] || { name: segmentName, sales: 0 }
-      segment.sales += (product?.price || 0) * Number(item.quantity || 0)
+      segment.sales += (product?.selling_price ?? product?.price ?? 0) * Number(item.quantity || 0)
       segments[segmentName] = segment
     })
     return segments
   }, {})).sort((first, second) => second.sales - first.sales)
+  const filteredMonthlyOrders = monthlyOrders.filter((order) => (order.products || []).some((item) => matchesAnalyticsFilter(order, item)))
+  const productProfitData = products.map((product) => {
+    const soldUnits = filteredMonthlyOrders.reduce((total, order) => total + ((order.products || [])
+      .filter((item) => item.productId === product.id && matchesAnalyticsFilter(order, item))
+      .reduce((sum, item) => {
+        const unitSellingPrice = Number(item.unitSellingPrice ?? item.unit_selling_price ?? item.selling_price ?? product.selling_price ?? product.price ?? 0)
+        const unitCostPrice = Number(item.unitCostPrice ?? item.unit_cost_price ?? item.cost_price ?? product.cost_price ?? 0)
+        return sum + Number(item.quantity || 0)
+      }, 0)), 0)
+    const totalProfit = filteredMonthlyOrders.reduce((total, order) => total + ((order.products || [])
+      .filter((item) => item.productId === product.id && matchesAnalyticsFilter(order, item))
+      .reduce((sum, item) => {
+        const unitSellingPrice = Number(item.unitSellingPrice ?? item.unit_selling_price ?? item.selling_price ?? product.selling_price ?? product.price ?? 0)
+        const unitCostPrice = Number(item.unitCostPrice ?? item.unit_cost_price ?? item.cost_price ?? product.cost_price ?? 0)
+        return sum + ((unitSellingPrice - unitCostPrice) * Number(item.quantity || 0))
+      }, 0)), 0)
+    const productSellingPrice = Number(product.selling_price ?? product.price ?? 0)
+    const productCost = Number(product.cost_price ?? 0)
+    return {
+      name: product.name,
+      profit: totalProfit,
+      units: soldUnits,
+      selling: productSellingPrice,
+      cost: productCost,
+    }
+  }).filter((product) => product.profit > 0 || product.units > 0).sort((first, second) => second.profit - first.profit)
+  const profitMin = productProfitData.length ? Math.min(...productProfitData.map((product) => product.profit), 0) : 0
+  const profitMax = productProfitData.length ? Math.max(...productProfitData.map((product) => product.profit), 0) : 1
+  const profitRange = Math.max(profitMax - profitMin, 1)
+  const profitAreaPoints = productProfitData.length
+    ? productProfitData.map((product, index) => {
+        const x = productProfitData.length === 1 ? 50 : (index / (productProfitData.length - 1)) * 100
+        const y = productProfitData.length === 1 ? 50 : 100 - ((product.profit - profitMin) / profitRange) * 80
+        return `${x},${y}`
+      }).join(' ')
+    : ''
+  const profitAreaPath = productProfitData.length
+    ? `M 0 100 ${productProfitData.map((product, index) => {
+        const x = productProfitData.length === 1 ? 50 : (index / (productProfitData.length - 1)) * 100
+        const y = productProfitData.length === 1 ? 50 : 100 - ((product.profit - profitMin) / profitRange) * 80
+        return `L ${x} ${y}`
+      }).join(' ')} L 100 100 Z`
+    : ''
+  const typeQuantitySales = Object.values(monthlyOrders.reduce((segments, order) => {
+    ;(order.products || []).forEach((item) => {
+      const product = products.find((catalogProduct) => catalogProduct.id === item.productId)
+      const productType = product?.category || 'Other'
+      if (analyticsType !== 'all' && productType !== analyticsType) return
+      const area = order.location?.city || order.location?.address || 'Unknown area'
+      if (analyticsArea !== 'all' && area !== analyticsArea) return
+
+      const segment = segments[productType] || { name: productType, quantity: 0 }
+      segment.quantity += Number(item.quantity || 0)
+      segments[productType] = segment
+    })
+    return segments
+  }, {})).sort((first, second) => second.quantity - first.quantity)
+  const maxTypeQuantity = Math.max(...typeQuantitySales.map((type) => type.quantity), 1)
+  const quantityLinePoints = typeQuantitySales.length
+    ? typeQuantitySales.map((type, index) => {
+        const x = typeQuantitySales.length === 1 ? 50 : (index / (typeQuantitySales.length - 1)) * 100
+        const y = 100 - (type.quantity / maxTypeQuantity) * 88
+        return `${x},${y}`
+      }).join(' ')
+    : ''
   const startOfDay = (date) => new Date(date.getFullYear(), date.getMonth(), date.getDate())
   const salesInRange = (startDate, endDate) => orders.reduce((total, order) => {
     if (order.status === 'Cancelled' || !order.createdAt) return total
@@ -203,30 +275,104 @@ export default function Owner({ products, setProducts, orders, setOrders }) {
     return { ...types, [product.category]: type }
   }, {})).map((type) => ({ ...type, rating: type.count ? type.total / type.count : 0 }))
 
+  const refreshProductsFromServer = useCallback(async () => {
+    try {
+      const backendProducts = await getProducts()
+      setProducts(Array.isArray(backendProducts) ? backendProducts : [])
+    } catch (error) {
+      console.error('Failed to sync product catalog from backend:', error)
+    }
+  }, [setProducts])
+
+  const refreshOrdersFromServer = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/orders`)
+      if (!response.ok) {
+        throw new Error(`Orders request failed: ${response.status}`)
+      }
+
+      const backendOrders = await response.json()
+      setOrders(Array.isArray(backendOrders) ? backendOrders : [])
+    } catch (error) {
+      console.error('Failed to sync orders from backend:', error)
+    }
+  }, [setOrders])
+
+  useEffect(() => {
+    refreshProductsFromServer()
+    refreshOrdersFromServer()
+  }, [refreshProductsFromServer, refreshOrdersFromServer])
+
   const handleLogout = () => {
     localStorage.removeItem('token')
+    localStorage.removeItem('user')
     navigate('/login', { replace: true })
   }
 
-  const addProduct = (event) => {
+  const addProduct = async (event) => {
     event.preventDefault()
-    setProducts((current) => [...current, {
-      id: Date.now(),
-      name: productForm.name,
-      price: Number(productForm.price),
-      oldPrice: Number(productForm.price),
-      stock: Number(productForm.stock),
-      category: productForm.type.trim(),
-      tag: 'New product',
-      image: productForm.image,
-      reviews: [],
-    }])
-    setProductForm({ name: '', type: '', price: '', stock: '', image: '' })
-    setActiveView('manage-inventory')
+
+    const payload = {
+      name: productForm.name.trim(),
+      description: productForm.description.trim() || 'New product added from owner dashboard.',
+      price: Number(productForm.selling_price || productForm.price || 0),
+      selling_price: Number(productForm.selling_price || productForm.price || 0),
+      cost_price: Number(productForm.cost_price || 0),
+      stock_quantity: Number(productForm.stock),
+      image_url: productForm.image || '',
+    }
+
+    try {
+      if (!productForm.image) {
+        throw new Error('Please choose a product image before saving.')
+      }
+
+      const duplicate = products.some((product) => product.name?.trim().toLowerCase() === payload.name.toLowerCase())
+      if (duplicate) {
+        throw new Error(`A product named '${payload.name}' already exists. Choose a different name.`)
+      }
+
+      const categoryName = productForm.type.trim()
+      const categories = await getCategories()
+      const existingCategory = categories.find((category) => category.name.trim().toLowerCase() === categoryName.toLowerCase())
+      const category = existingCategory || await createCategory({ name: categoryName, description: `${categoryName} products` })
+      payload.category_id = category.id
+      const createdProduct = await createProduct(payload)
+      if (!createdProduct.image_url) {
+        throw new Error('The backend did not save the uploaded product image. Restart the backend and try again.')
+      }
+
+      const savedProduct = {
+        ...createdProduct,
+        image: createdProduct.image_url.startsWith('http') || createdProduct.image_url.startsWith('data:')
+          ? createdProduct.image_url
+          : `${import.meta.env.VITE_API_URL || 'http://127.0.0.1:2026'}/static/uploads/${createdProduct.image_url}`,
+      }
+      setProducts((current) => {
+        const productId = savedProduct.id || savedProduct.product_id
+        const alreadyLoaded = current.some((item) => (item.id || item.product_id) === productId)
+        return alreadyLoaded
+          ? current.map((item) => ((item.id || item.product_id) === productId ? savedProduct : item))
+          : [...current, savedProduct]
+      })
+      setProductForm({ name: '', type: '', description: '', price: '', cost_price: '', selling_price: '', stock: '', image: '' })
+      setActiveView('manage-inventory')
+    } catch (error) {
+      console.error('Failed to create product:', error)
+      alert(getErrorMessage(error, 'Unable to create product'))
+    }
   }
 
-  const deleteProduct = (productId) => {
-    setProducts((current) => current.filter((product) => product.id !== productId))
+  const deleteProduct = async (productId, productName) => {
+    if (!window.confirm(`Permanently delete ${productName}? This cannot be undone.`)) return
+
+    try {
+      await deleteProductFromDatabase(productId)
+      setProducts((current) => current.filter((product) => (product.id || product.product_id) !== productId))
+    } catch (error) {
+      console.error('Failed to delete product:', error)
+      alert(getErrorMessage(error, 'Unable to delete product'))
+    }
   }
 
   const updateOrderStatus = (orderId, status) => {
@@ -236,6 +382,18 @@ export default function Owner({ products, setProducts, orders, setOrders }) {
   const handleImageChange = (event) => {
     const file = event.target.files?.[0]
     if (!file) return
+
+    if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
+      alert('Please choose a PNG, JPEG, or WebP image.')
+      event.target.value = ''
+      return
+    }
+
+    if (file.size > 7 * 1024 * 1024) {
+      alert('Image must be smaller than 7 MB.')
+      event.target.value = ''
+      return
+    }
 
     const reader = new FileReader()
     reader.onload = () => {
@@ -297,7 +455,10 @@ export default function Owner({ products, setProducts, orders, setOrders }) {
             <form className="owner-form" onSubmit={addProduct}>
               <label>Product name<input value={productForm.name} onChange={(event) => setProductForm({ ...productForm, name: event.target.value })} required /></label>
               <label>Product type<input value={productForm.type} onChange={(event) => setProductForm({ ...productForm, type: event.target.value })} placeholder="e.g. Tech, Fashion, Beauty" required /></label>
-              <label>Price<input type="number" min="0" value={productForm.price} onChange={(event) => setProductForm({ ...productForm, price: event.target.value })} required /></label>
+              <label>Description<textarea value={productForm.description} onChange={(event) => setProductForm({ ...productForm, description: event.target.value })} rows="3" placeholder="Short product description" /></label>
+              <label>Cost price<input type="number" min="0" value={productForm.cost_price} onChange={(event) => setProductForm({ ...productForm, cost_price: event.target.value })} required /></label>
+              <label>Selling price<input type="number" min="0" value={productForm.selling_price} onChange={(event) => setProductForm({ ...productForm, selling_price: event.target.value })} required /></label>
+              <label>Price<input type="number" min="0" value={productForm.price} onChange={(event) => setProductForm({ ...productForm, price: event.target.value, selling_price: event.target.value })} required /></label>
               <label>Stock quantity<input type="number" min="0" value={productForm.stock} onChange={(event) => setProductForm({ ...productForm, stock: event.target.value })} required /></label>
               <label>Product image<input type="file" accept="image/png, image/jpeg, image/webp" onChange={handleImageChange} required />{productForm.image && <img className="product-upload-preview" src={productForm.image} alt="New product preview" />}</label>
               <button className="workspace-primary" type="submit">Add product</button>
@@ -312,7 +473,25 @@ export default function Owner({ products, setProducts, orders, setOrders }) {
           {activeView === 'manage-inventory' && <div className="workspace-content">
             <p className="eyebrow">Catalog</p><h2>Manage inventory</h2>
             <p className="inventory-intro">Update stock quantities or remove products from your catalog.</p>
-            <div className="inventory-list">{products.map((product, index) => <div key={`${product.name}-${index}`}><span><strong>{product.name}</strong><small>{formatCurrency(product.price, currency)}</small></span><label>Stock<input type="number" min="0" value={product.stock} onChange={(event) => setProducts((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, stock: Number(event.target.value) } : item))} /></label><button className="delete-product-button" onClick={() => deleteProduct(product.id)}>Delete</button></div>)}</div>
+            <div className="inventory-list">{products.map((product, index) => <div key={`${product.name}-${index}`}><span><strong>{product.name}</strong><small>{formatCurrency(product.price, currency)}</small></span><label>Stock<input type="number" min="0" value={product.stock_quantity ?? product.stock ?? 0} onChange={async (event) => {
+              const nextQuantity = Number(event.target.value)
+              const productId = product.id || product.product_id
+              const payload = {
+                name: product.name,
+                description: product.description || 'Updated from owner dashboard.',
+                price: Number(product.price),
+                stock_quantity: nextQuantity,
+                image_url: product.image_url || product.image || '',
+                category_id: Number(product.category_id || 1),
+              }
+              try {
+                await updateProduct(productId, payload)
+                setProducts((current) => current.map((item) => ((item.id || item.product_id) === productId ? { ...item, stock_quantity: nextQuantity, stock: nextQuantity } : item)))
+              } catch (error) {
+                console.error('Failed to update stock:', error)
+                alert(getErrorMessage(error, 'Unable to update stock'))
+              }
+            }} /></label><button className="delete-product-button" onClick={() => deleteProduct(product.id || product.product_id, product.name)}>Delete</button></div>)}</div>
           </div>}
 
           {activeView === 'review-inventory' && <div className="workspace-content">
@@ -356,6 +535,8 @@ export default function Owner({ products, setProducts, orders, setOrders }) {
               <section className="sales-chart-panel sales-line-panel"><p className="eyebrow">Daily sales</p><h3>Last 14 days</h3><div className="line-chart"><svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label="Line chart of sales for the last 14 days"><polyline points={linePoints} fill="none" stroke="#e26d4e" strokeWidth="2" vectorEffect="non-scaling-stroke" />{dailySales.map((day, index) => <circle key={day.label} cx={(index / (dailySales.length - 1)) * 100} cy={100 - (day.value / maxDailySales) * 88} r="1.8" fill="#17201c"><title>{day.label}: {formatCurrency(day.value, currency)}</title></circle>)}</svg></div><div className="chart-axis-labels"><span>{dailySales[0].label}</span><span>{dailySales[dailySales.length - 1].label}</span></div></section>
               <section className="sales-chart-panel"><p className="eyebrow">Period comparison</p><h3>Sales change</h3><div className="comparison-bars">{salesPeriods.map((period) => { const change = percentageChange(period.current, period.previous); return <div className="comparison-bar" key={period.name}><span>{period.name}</span><div><i className={change < 0 ? 'trend-negative' : ''} style={{ width: `${Math.min(100, Math.abs(change))}%` }} /></div><strong className={change >= 0 ? 'sales-up' : 'sales-down'}>{change >= 0 ? '+' : ''}{change.toFixed(1)}%</strong></div> })}</div></section>
               <section className="sales-chart-panel sales-pie-panel"><p className="eyebrow">Sales mix</p><h3>{pieTitle}</h3>{pieStops.length === 0 ? <p className="analytics-note">No sales match the selected filters.</p> : <div className="pie-layout"><div className="sales-pie" style={{ background: `conic-gradient(${pieStops.map((stop) => `${stop.color} ${stop.start}% ${stop.end}%`).join(', ')})` }} /><div className="pie-legend">{pieStops.map((stop) => <div key={stop.name}><i style={{ background: stop.color }} /><span>{stop.name}</span><strong>{pieSalesTotal ? `${((stop.sales / pieSalesTotal) * 100).toFixed(1)}%` : '0%'}</strong></div>)}</div></div>}</section>
+              <section className="sales-chart-panel"><p className="eyebrow">Quantity sold</p><h3>Units sold by product type</h3>{typeQuantitySales.length === 0 ? <p className="analytics-note">No product quantities match the selected filters.</p> : <div className="line-chart"><svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label="Line chart showing product quantity sold by type"><polyline points={quantityLinePoints} fill="none" stroke="#586b31" strokeWidth="2" vectorEffect="non-scaling-stroke" />{typeQuantitySales.map((type, index) => { const x = typeQuantitySales.length === 1 ? 50 : (index / (typeQuantitySales.length - 1)) * 100; const y = 100 - (type.quantity / maxTypeQuantity) * 88; return <circle key={type.name} cx={x} cy={y} r="1.8" fill="#17201c"><title>{type.name}: {type.quantity} units sold</title></circle> })}</svg></div>}<div className="chart-axis-labels">{typeQuantitySales.map((type, index) => <span key={`${type.name}-${index}`}>{type.name}</span>)}</div></section>
+              <section className="sales-chart-panel"><p className="eyebrow">Profit overview</p><h3>Profit by product</h3>{productProfitData.length === 0 ? <p className="analytics-note">Add product cost and selling prices to see profit analytics.</p> : <div className="line-chart"><svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label="Area chart of product profit"><defs><linearGradient id="profitAreaFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#2c7a66" stopOpacity="0.55" /><stop offset="100%" stopColor="#2c7a66" stopOpacity="0.08" /></linearGradient></defs><path d={profitAreaPath} fill="url(#profitAreaFill)" /><polyline points={profitAreaPoints} fill="none" stroke="#2c7a66" strokeWidth="2" vectorEffect="non-scaling-stroke" />{productProfitData.map((product, index) => { const x = productProfitData.length === 1 ? 50 : (index / (productProfitData.length - 1)) * 100; const y = productProfitData.length === 1 ? 50 : 100 - ((product.profit - profitMin) / profitRange) * 80; return <circle key={product.name} cx={x} cy={y} r="1.8" fill="#2c7a66"><title>{product.name}: profit {formatCurrency(product.profit, currency)}</title></circle> })}</svg></div>}<div className="chart-axis-labels">{productProfitData.map((product, index) => <span key={`${product.name}-${index}`}>{product.name}</span>)}</div></section>
               <section className="sales-chart-panel sales-rating-panel"><p className="eyebrow">Customer ratings</p><h3>Rating by product type</h3><div className="rating-chart">{ratingByType.map((type) => <div className="rating-row" key={type.name}><span>{type.name}</span><div className="rating-track"><i style={{ width: `${(type.rating / 5) * 100}%` }} /></div><strong>{type.count ? `${type.rating.toFixed(1)} / 5` : '—'}</strong><small>{type.count} reviews</small></div>)}</div></section>
             </div>
           </div>}

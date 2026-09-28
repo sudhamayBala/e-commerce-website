@@ -150,7 +150,7 @@ async def delete_user(
             detail="User not found",
         )
 
-    # Remove dependent rows first because their foreign keys are required.
+                                                                          
     payments = (await db.exec(select(Payment).where(Payment.user_id == user.id))).all()
     for payment in payments:
         await db.delete(payment)

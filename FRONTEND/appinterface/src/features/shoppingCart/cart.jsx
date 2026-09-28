@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { CircleMarker, MapContainer, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import '../../css/RegisterLogin/Home.css'
 import 'leaflet/dist/leaflet.css'
-import { formatCurrency, getStoreSettings } from '../data/storeSettings'
+import { API_BASE_URL } from '../../api'
+import { formatCurrency, getStoreSettings } from '../../sharedData/storeSettings'
 
 function MapClickHandler({ onLocationSelect }) {
   useMapEvents({
@@ -125,36 +126,125 @@ export default function Cart({ cart, setCart, products, setProducts, setOrders }
     setCheckoutData((current) => ({ ...current, [name]: value }))
   }
 
-  const placeOrder = (event) => {
+  const validateCheckout = () => {
+    const fullName = String(checkoutData.name || '').trim()
+    const address = String(checkoutData.address || '').trim()
+    const city = String(checkoutData.city || '').trim()
+
+    if (!fullName) {
+      window.alert('Full name is required before placing the order.')
+      return false
+    }
+
+    if (!address) {
+      window.alert('Delivery address is required before placing the order.')
+      return false
+    }
+
+    if (!city) {
+      window.alert('City is required before placing the order.')
+      return false
+    }
+
+    return true
+  }
+
+  const placeOrder = async (event) => {
     event.preventDefault()
-    setOrders((currentOrders) => [...currentOrders, {
-      id: `SN-${Date.now().toString().slice(-4)}`,
-      customer: checkoutData.name,
-      items: itemCount,
-      total,
-      status: 'Preparing',
-      createdAt: new Date().toISOString(),
-      location: {
-        address: checkoutData.address,
-        city: checkoutData.city,
-        coordinates: selectedLocation,
-      },
-      products: cartItems.map((product) => ({
-        productId: product.id,
-        name: product.name,
-        quantity: cart[product.id],
-        returnStatus: 'Not returned',
-        returnReason: '',
-      })),
-    }])
-    setProducts((currentProducts) => currentProducts
-      .map((product) => ({
-        ...product,
-        stock: Math.max(0, (product.stock || 0) - (cart[product.id] || 0)),
-      }))
-    )
-    setOrderPlaced(true)
-    setCart({})
+
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || 'null')
+      const userId = Number(user?.id ?? user?.user_id ?? user?.userId ?? 0)
+
+      if (!cartItems.length) {
+        window.alert('Your cart is empty.')
+        return
+      }
+
+      if (!userId) {
+        window.alert('Please log in before placing an order.')
+        navigate('/login', { replace: true })
+        return
+      }
+
+      if (!validateCheckout()) {
+        return
+      }
+
+      const orderPayload = {
+        user_id: userId,
+        customer_name: checkoutData.name.trim(),
+        shipping_address: checkoutData.address.trim(),
+        payment_method: checkoutData.payment || 'card',
+        total_price: Number(total.toFixed(2)),
+        items: cartItems.map((product) => ({
+          product_id: product.id,
+          quantity: cart[product.id],
+          price: Number(product.price),
+        })),
+      }
+
+      const response = await fetch(`${API_BASE_URL}/orders/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderPayload),
+      })
+
+      if (!response.ok) {
+        let errorMessage = 'Order creation failed'
+        try {
+          const errorPayload = await response.json()
+          errorMessage = typeof errorPayload?.detail === 'string'
+            ? errorPayload.detail
+            : errorPayload?.message || JSON.stringify(errorPayload)
+        } catch {
+          const text = await response.text()
+          if (text) errorMessage = text
+        }
+        throw new Error(errorMessage)
+      }
+
+      const createdOrder = await response.json()
+
+      setOrders((currentOrders) => [createdOrder, ...currentOrders])
+      setProducts((currentProducts) => currentProducts
+        .map((product) => ({
+          ...product,
+          stock: Math.max(0, Number(product.stock || 0) - (cart[product.id] || 0)),
+        }))
+      )
+
+      setOrderPlaced(true)
+      setCart({})
+
+      const paymentPayload = {
+        customer_email: checkoutData.name ? `${checkoutData.name.toLowerCase().replace(/\s+/g, '.')}@demo.local` : 'guest@demo.local',
+        items: cartItems.map((product) => ({
+          name: product.name,
+          quantity: cart[product.id],
+          price: Number(product.price),
+        })),
+        success_url: `${window.location.origin}/home`,
+        cancel_url: `${window.location.origin}/cart`,
+      }
+
+      const paymentResponse = await fetch(`${API_BASE_URL}/payment/create-checkout-session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(paymentPayload),
+      })
+
+      if (paymentResponse.ok) {
+        const paymentResult = await paymentResponse.json()
+        if (paymentResult.checkout_url && paymentResult.checkout_url.startsWith('http')) {
+          window.location.href = paymentResult.checkout_url
+          return
+        }
+      }
+    } catch (error) {
+      console.error('Checkout failed:', error)
+      window.alert(error?.message || 'Order could not be created. Please try again.')
+    }
   }
 
   return (

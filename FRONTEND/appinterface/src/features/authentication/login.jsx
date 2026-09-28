@@ -5,13 +5,61 @@ import "../../css/RegisterLogin/Login.css";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../api";
 
+const normalizeUserRole = (value) => {
+    const normalized = String(value ?? "")
+        .trim()
+        .toLowerCase();
+
+    if (normalized === "admin" || normalized === "owner") return "admin";
+    if (normalized === "customer" || normalized === "user") return "customer";
+    return normalized;
+};
+
+const extractErrorMessage = (error, fallback = "Something went wrong. Please try again.") => {
+    if (!error) return fallback;
+
+    const payload = error?.response?.data ?? error?.data ?? error;
+
+    if (typeof payload === "string") return payload;
+    if (typeof payload?.message === "string" && payload.message.trim()) return payload.message;
+    if (typeof payload?.detail === "string" && payload.detail.trim()) return payload.detail;
+
+    if (Array.isArray(payload?.detail)) {
+        const joined = payload.detail
+            .map((item) => {
+                if (typeof item === "string") return item;
+                if (typeof item?.msg === "string") return item.msg;
+                if (typeof item?.message === "string") return item.message;
+                if (typeof item?.detail === "string") return item.detail;
+                return "";
+            })
+            .filter(Boolean)
+            .join(". ");
+
+        if (joined) return joined;
+    }
+
+    if (typeof payload?.error === "string" && payload.error.trim()) return payload.error;
+    if (typeof error?.message === "string" && error.message.trim()) return error.message;
+
+    try {
+        return JSON.stringify(payload);
+    } catch {
+        return fallback;
+    }
+};
+
 export default function Login() {
     const navigate = useNavigate();
     const [isRegister, setIsRegister] = useState(false);
-    
-    // Role state using "user" for customer and "owner" for owner login
-    const [loginRole, setLoginRole] = useState("user"); 
-    
+    const [forgotMode, setForgotMode] = useState(false);
+    const [resetRequestSent, setResetRequestSent] = useState(false);
+    const [resetCode, setResetCode] = useState("");
+    const [newPassword, setNewPassword] = useState("");
+    const [resetEmail, setResetEmail] = useState("");
+
+    const [loginRole, setLoginRole] = useState("user");
+
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
@@ -46,7 +94,68 @@ export default function Login() {
         }));
     };
 
-    // Handle File Upload for Profile Picture (Converts file to Base64)
+    const handleForgotPasswordRequest = async (event) => {
+        if (event) event.preventDefault();
+
+        setError("");
+        setSuccess("");
+
+        const email = formData.email.trim();
+        if (!email) {
+            setError("Please enter your email to receive a reset code.");
+            return;
+        }
+
+        try {
+            const response = await axios.post(`${API_BASE_URL}/auth/forgot-password`, { email });
+            setResetEmail(email);
+            setResetRequestSent(true);
+            setSuccess(response?.data?.message || "Reset code sent successfully.");
+        } catch (err) {
+            setError(extractErrorMessage(err, "Unable to send reset code. Please try again."));
+            setResetRequestSent(false);
+        }
+    };
+
+    const handleResetPassword = async (event) => {
+        if (event) event.preventDefault();
+
+        setError("");
+        setSuccess("");
+
+        if (!resetEmail.trim() || !resetCode.trim() || !newPassword.trim()) {
+            setError("Please enter your email, reset code, and a new password.");
+            return;
+        }
+
+        if (newPassword.length < 8) {
+            setError("New password must be at least 8 characters long.");
+            return;
+        }
+
+        try {
+            const response = await axios.post(`${API_BASE_URL}/auth/reset-password`, {
+                email: resetEmail.trim(),
+                code: resetCode.trim(),
+                new_password: newPassword,
+            });
+
+            setSuccess(response?.data?.message || "Password reset successfully.");
+            setForgotMode(false);
+            setResetRequestSent(false);
+            setResetCode("");
+            setNewPassword("");
+            setResetEmail("");
+            setFormData((prev) => ({ ...prev, password: "" }));
+            setTimeout(() => {
+                setSuccess("");
+                setIsRegister(false);
+            }, 1200);
+        } catch (err) {
+            setError(extractErrorMessage(err, "Password reset failed. Please check your code and try again."));
+        }
+    };
+
     const handleFileChange = (event) => {
         const file = event.target.files[0];
         if (file) {
@@ -54,7 +163,7 @@ export default function Login() {
             reader.onloadend = () => {
                 setRegisterData((prev) => ({
                     ...prev,
-                    profile_picture: reader.result, // Base64 Data URL
+                    profile_picture: reader.result, 
                 }));
             };
             reader.readAsDataURL(file);
@@ -83,7 +192,7 @@ export default function Login() {
             const data = response?.data ?? {};
 
             if (data?.success === false) {
-                setError(data.message || data.detail || "Invalid email or password");
+                setError(extractErrorMessage({ response: { data } }, "Invalid email or password"));
                 setIsLoggedIn(false);
                 return;
             }
@@ -92,11 +201,11 @@ export default function Login() {
                 throw new Error("The server did not return a login token.");
             }
 
-            const backendRole = String(
+            const backendRole = normalizeUserRole(
                 data.role?.value ?? data.role ?? data.user?.role?.value ?? data.user?.role ?? data.user_role ?? ''
-            ).trim().toLowerCase();
-            
-            const isOwner = backendRole === "admin" || backendRole === "owner";
+            );
+
+            const isOwner = backendRole === "admin";
 
             if (loginRole === "owner" && !isOwner) {
                 setError("This account is not registered as an owner account.");
@@ -119,11 +228,7 @@ export default function Login() {
             } else if (err.response.status === 401) {
                 setError("Email or password is incorrect.");
             } else {
-                setError(
-                    err.response?.data?.message ||
-                    err.response?.data?.detail ||
-                    "Login failed. Please try again."
-                );
+                setError(extractErrorMessage(err, "Login failed. Please try again."));
             }
             setIsLoggedIn(false);
         }
@@ -169,8 +274,11 @@ export default function Login() {
                 throw new Error("The server did not return a registration token.");
             }
 
+            const normalizedRole = normalizeUserRole(data.role ?? registrationData.role ?? "customer");
+            const savedUser = { ...data, role: normalizedRole };
+
             localStorage.setItem("token", data.access_token);
-            localStorage.setItem("user", JSON.stringify(data));
+            localStorage.setItem("user", JSON.stringify(savedUser));
             setSuccess("Registration successful! Redirecting...");
 
             setRegisterData({
@@ -185,18 +293,24 @@ export default function Login() {
             setTimeout(() => navigate("/home", { replace: true }), 700);
         } catch (err) {
             console.error("Register Error:", err);
-            setError(err.response?.data?.detail || err.message || "Registration failed. Please try again.");
+            setError(extractErrorMessage(err, "Registration failed. Please try again."));
         }
     };
 
     const showRegister = () => {
         setIsRegister(true);
+        setForgotMode(false);
         setError("");
         setSuccess("");
     };
 
     const showLogin = () => {
         setIsRegister(false);
+        setForgotMode(false);
+        setResetRequestSent(false);
+        setResetCode("");
+        setNewPassword("");
+        setResetEmail("");
         setError("");
         setSuccess("");
     };
@@ -204,11 +318,10 @@ export default function Login() {
     return (
         <div className="login-container">
             <div className="login-card">
-                {!isRegister && (
+                {!isRegister && !forgotMode && (
                     <>
                         <h1 className="login-title">Login ⛩️</h1>
 
-                        {/* Role Switch Buttons: User vs Owner */}
                         <div className="login-role-switch" aria-label="Choose login type">
                             <button
                                 type="button"
@@ -259,10 +372,27 @@ export default function Login() {
                         </form>
 
                         <p className="switch-text">
+                            Forgot your password?{" "}
+                            <button
+                                type="button"
+                                className="switch-button"
+                                data-action="forgot-password"
+                                onClick={() => {
+                                    setForgotMode(true);
+                                    setError("");
+                                    setSuccess("");
+                                }}
+                            >
+                                Reset it
+                            </button>
+                        </p>
+
+                        <p className="switch-text">
                             Don't have an account?{" "}
                             <button
                                 type="button"
                                 className="switch-button"
+                                data-action="register"
                                 onClick={showRegister}
                             >
                                 Register
@@ -277,11 +407,85 @@ export default function Login() {
                     </>
                 )}
 
+                {!isRegister && forgotMode && (
+                    <>
+                        <h1 className="login-title">Forgot password 🔐</h1>
+
+                        {!resetRequestSent ? (
+                            <form className="login-form" onSubmit={handleForgotPasswordRequest}>
+                                <div className="input-container">
+                                    <label htmlFor="reset-email">Email:</label>
+                                    <input
+                                        className="input-box"
+                                        type="email"
+                                        placeholder="Enter your email"
+                                        value={formData.email}
+                                        onChange={handleChange}
+                                        name="email"
+                                        id="reset-email"
+                                    />
+                                </div>
+
+                                <button type="submit" className="login-button">
+                                    Send reset code
+                                </button>
+                            </form>
+                        ) : (
+                            <form className="login-form" onSubmit={handleResetPassword}>
+                                <div className="input-container">
+                                    <label htmlFor="reset-email-final">Email:</label>
+                                    <input
+                                        className="input-box"
+                                        type="email"
+                                        value={resetEmail}
+                                        readOnly
+                                        id="reset-email-final"
+                                    />
+                                </div>
+
+                                <div className="input-container">
+                                    <label htmlFor="reset-code">Reset code:</label>
+                                    <input
+                                        className="input-box"
+                                        type="text"
+                                        placeholder="Enter 6-digit code"
+                                        value={resetCode}
+                                        onChange={(event) => setResetCode(event.target.value)}
+                                        id="reset-code"
+                                        maxLength={6}
+                                    />
+                                </div>
+
+                                <div className="input-container">
+                                    <label htmlFor="new-password">New password:</label>
+                                    <input
+                                        className="input-box"
+                                        type="password"
+                                        placeholder="Enter new password"
+                                        value={newPassword}
+                                        onChange={(event) => setNewPassword(event.target.value)}
+                                        id="new-password"
+                                    />
+                                </div>
+
+                                <button type="submit" className="login-button">
+                                    Reset password
+                                </button>
+                            </form>
+                        )}
+
+                        <p className="switch-text">
+                            <button type="button" className="switch-button" onClick={showLogin}>
+                                Back to login
+                            </button>
+                        </p>
+                    </>
+                )}
+
                 {isRegister && (
                     <>
                         <h1 className="login-title">Register 📝</h1>
 
-                        {/* Role Switch Buttons for Registration */}
                         <div className="login-role-switch" aria-label="Choose account type">
                             <button
                                 type="button"

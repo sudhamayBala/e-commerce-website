@@ -1,6 +1,7 @@
 from decimal import Decimal
-from typing import List, Optional, TYPE_CHECKING
-from sqlmodel import Field, Relationship, SQLModel
+from typing import TYPE_CHECKING
+
+from sqlmodel import SQLModel, Field, Relationship
 
 if TYPE_CHECKING:
     from .order import Order
@@ -10,9 +11,22 @@ if TYPE_CHECKING:
 class OrderItem(SQLModel, table=True):
     __tablename__ = "order_items"
 
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int | None = Field(
+        default=None,
+        primary_key=True
+    )
 
-    quantity: int = Field(default=1, ge=1)
+    order_id: int = Field(
+        foreign_key="orders.id"
+    )
+
+    product_id: int = Field(
+        foreign_key="products.id"
+    )
+
+    quantity: int = Field(
+        default=1
+    )
 
     unit_price: Decimal = Field(
         default=Decimal("0.00"),
@@ -20,12 +34,26 @@ class OrderItem(SQLModel, table=True):
         decimal_places=2,
     )
 
-    is_reviewed: bool = Field(default=False)
+    unit_cost_price: Decimal = Field(
+        default=Decimal("0.00"),
+        max_digits=10,
+        decimal_places=2,
+    )
 
-    order_id: int = Field(foreign_key="orders.id")
+    unit_selling_price: Decimal = Field(
+        default=Decimal("0.00"),
+        max_digits=10,
+        decimal_places=2,
+    )
 
-    product_id: int = Field(foreign_key="products.id")
+    is_reviewed: bool = Field(
+        default=False,
+    )
 
-    order: "Order" = Relationship(back_populates="order_items")
+    order: "Order" = Relationship(
+        back_populates="order_items"
+    )
 
-    product: "Product" = Relationship(back_populates="order_items")
+    product: "Product" = Relationship(
+        back_populates="order_items"
+    )

@@ -13,9 +13,9 @@ class UserRole(str, Enum):
     DELIVERY = "Delivery"
 
 
-# ============================================================
-# USER CREATE
-# ============================================================
+                                                              
+             
+                                                              
 
 class UserCreate(SQLModel):
     email: EmailStr
@@ -25,22 +25,22 @@ class UserCreate(SQLModel):
     role: UserRole = UserRole.CUSTOMER
 
 
-# ============================================================
-# LOGIN REQUEST
-# ============================================================
+                                                              
+               
+                                                              
 
 class LoginRequest(SQLModel):
     email: EmailStr
     password: str
 
 
-# ============================================================
-# API RESPONSE
-# ============================================================
+                                                              
+              
+                                                              
 
-# ============================================================
-# USER UPDATE
-# ============================================================
+                                                              
+             
+                                                              
 
 class UserUpdate(SQLModel):
     profile_picture: Optional[str] = None
@@ -49,9 +49,9 @@ class UserUpdate(SQLModel):
     role: Optional[UserRole] = None
 
 
-# ============================================================
-# USER READ
-# ============================================================
+                                                              
+           
+                                                              
 
 class UserRead(SQLModel):
     id: int
@@ -69,9 +69,9 @@ class UserRead(SQLModel):
     )
 
 
-# ============================================================
-# USER PUBLIC
-# ============================================================
+                                                              
+             
+                                                              
 
 class UserPublic(SQLModel):
     id: int

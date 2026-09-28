@@ -1,23 +1,32 @@
 from decimal import Decimal
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import SQLModel, Field, Relationship
 
 if TYPE_CHECKING:
-    from .Table.cart import Cart
     from .product import Product
+    from .cart import Cart
 
 
 class CartItem(SQLModel, table=True):
     __tablename__ = "cart_items"
 
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int | None = Field(
+        default=None,
+        primary_key=True
+    )
 
-    cart_id: int = Field(foreign_key="carts.id")
+    cart_id: int = Field(
+        foreign_key="carts.id"
+    )
 
-    product_id: int = Field(foreign_key="products.id")
+    product_id: int = Field(
+        foreign_key="products.id"
+    )
 
-    quantity: int = Field(default=1, ge=1)
+    quantity: int = Field(
+        default=1
+    )
 
     unit_price: Decimal = Field(
         default=Decimal("0.00"),
@@ -25,6 +34,10 @@ class CartItem(SQLModel, table=True):
         decimal_places=2,
     )
 
-    cart: "Cart" = Relationship(back_populates="items")
+    product: "Product" = Relationship(
+        back_populates="cart_items"
+    )
 
-    product: "Product" = Relationship(back_populates="cart_items")
+    cart: "Cart" = Relationship(
+        back_populates="cart_items"
+    )

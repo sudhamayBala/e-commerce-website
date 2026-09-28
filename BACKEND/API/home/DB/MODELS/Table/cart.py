@@ -1,10 +1,11 @@
 from datetime import datetime, timezone
-from typing import List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, List
 
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import SQLModel, Field, Relationship
+
 if TYPE_CHECKING:
     from .user import User
-    from ..cart_item import CartItem
+    from .cart_item import CartItem
 
 
 class Cart(SQLModel, table=True):
@@ -21,11 +22,10 @@ class Cart(SQLModel, table=True):
         default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None)
     )
 
-    user: "User" = Relationship(back_populates="cart")
+    user: Optional["User"] = Relationship(
+        back_populates="cart"
+    )
 
-    items: List["CartItem"] = Relationship(
-        back_populates="cart",
-        sa_relationship_kwargs={
-            "cascade": "all, delete-orphan"
-        }
+    cart_items: List["CartItem"] = Relationship(
+        back_populates="cart"
     )

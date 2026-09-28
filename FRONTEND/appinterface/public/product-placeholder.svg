@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Product image unavailable">
+  <rect width="800" height="600" fill="#f1eee7"/>
+  <rect x="245" y="160" width="310" height="250" rx="12" fill="#d9d8d0"/>
+  <circle cx="345" cy="250" r="28" fill="#b8b9af"/>
+  <path d="M270 370l90-90 70 65 45-45 55 70z" fill="#a7aa9c"/>
+</svg>

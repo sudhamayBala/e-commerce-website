@@ -6,7 +6,7 @@ from service.email import (
 
 
 
-#api_router=APIRouter(prefix="/api",tags=["API"],dependencies=[Depends(Verify_Password)]) 
+                                                                                          
 api_router=APIRouter(prefix="/api",tags=["API"])
 @api_router.get("/main",tags=["API_ROUTER"])
 async def health_check():
@@ -22,8 +22,8 @@ async def say_hi ():
 @api_router.post("/orders",tags=["order_notification"])
 async def create_order():
 
-    # Your existing order creation logic
-    # order = ...
+                                        
+                 
 
     context = {
         "username": "Sudhamay",
@@ -45,8 +45,8 @@ async def create_order():
         context
     )
 
-    # Later:
-    # send html_content through your email service
+            
+                                                  
 
     return {
         "message": "Order created successfully"

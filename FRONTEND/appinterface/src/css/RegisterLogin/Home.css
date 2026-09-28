@@ -1,4 +1,4 @@
-/* Layout Shell */
+
 .home-shell {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   color: #1a1a1a;
@@ -6,7 +6,7 @@
   min-height: 100vh;
 }
 
-/* Announcement Bar */
+
 .announcement {
   background: #111;
   color: #fff;
@@ -21,7 +21,7 @@
   opacity: 0.5;
 }
 
-/* Header & Navigation */
+
 .topbar {
   display: flex;
   align-items: center;
@@ -100,14 +100,14 @@
   background: #eee;
 }
 
-/* Main Content */
+
 .content-area {
   max-width: 1200px;
   margin: 0 auto;
   padding: 40px 20px;
 }
 
-/* Hero Section */
+
 .hero-section {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -180,7 +180,7 @@
   object-fit: contain;
 }
 
-/* Categories */
+
 .category-section {
   margin-bottom: 40px;
 }
@@ -212,7 +212,7 @@
   border-color: #111;
 }
 
-/* Deal Banner */
+
 .deal-banner {
   background: #e0f2fe;
   padding: 30px;
@@ -220,7 +220,7 @@
   margin-bottom: 60px;
 }
 
-/* Product Section & Grid */
+
 .products-section {
   margin-bottom: 60px;
 }
@@ -342,7 +342,7 @@
   font-weight: bold;
 }
 
-/* Reviews Drawer */
+
 .review-toggle-row {
   margin-top: 12px;
   border-top: 1px solid #f0f0f0;
@@ -405,7 +405,7 @@
   cursor: pointer;
 }
 
-/* Benefits Section */
+
 .benefits-section {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -453,7 +453,7 @@
   font-size: 1.5rem;
 }
 
-/* Footer */
+
 .site-footer {
   border-top: 0;
   padding: 42px 32px 50px;

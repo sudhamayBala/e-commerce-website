@@ -1,23 +1,42 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import "../../css/RegisterLogin/Home.css";
-import { categories } from '../data/products'
+import { categories } from '../../sharedData/products'
 import photo from './image/ChatGPT Image Sep 13, 2026, 11_20_06 AM.png'
 import { API_BASE_URL } from '../../api'
-import { formatCurrency, getStoreSettings } from '../data/storeSettings'
+import { formatCurrency, getStoreSettings } from '../../sharedData/storeSettings'
+import { createReview } from '../../api/review/createReview'
+import { getReviews } from '../../api/review/getReviews'
+
+const normalizeOrderStatus = (status) => {
+  const value = String(status || '').toLowerCase()
+  if (['pending', 'processing'].includes(value)) return 'Preparing'
+  if (value === 'delivered') return 'Delivered'
+  if (value === 'cancelled') return 'Cancelled'
+  if (value === 'preparing') return 'Preparing'
+  return 'Preparing'
+}
+
+const fetchOrders = async () => {
+  const response = await fetch(`${API_BASE_URL}/orders`)
+  if (!response.ok) {
+    throw new Error('Failed to load orders')
+  }
+  return response.json()
+}
 
 export default function Home({ cart, setCart, productsList, setProductsList, orders, setOrders, setProducts }) {
   const navigate = useNavigate()
   const [activeCategory, setActiveCategory] = useState('All products')
   const [search, setSearch] = useState('')
-  const [reviewInputs, setReviewInputs] = useState({}) // { productId: { rating: 5, comment: '' } }
+  const [reviewInputs, setReviewInputs] = useState({}) 
   const [activeReviewTab, setActiveReviewTab] = useState(null)
   const [activeOrderReview, setActiveOrderReview] = useState(null)
   const [cancelReasons, setCancelReasons] = useState({})
   const [storeSettings, setStoreSettings] = useState(getStoreSettings)
   const { storeName, supportEmail, currency } = storeSettings
 
-  // Total item count across all products
+  
   const totalCartCount = Object.values(cart).reduce((sum, qty) => sum + qty, 0)
   const customerCount = new Set(orders.map((order) => order.customer).filter(Boolean)).size
   const reviews = productsList.flatMap((product) => product.reviews || [])
@@ -35,9 +54,7 @@ export default function Home({ cart, setCart, productsList, setProductsList, ord
   useEffect(() => {
     const loadReviews = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/rating/reviews`)
-        if (!response.ok) return
-        const savedReviews = await response.json()
+        const savedReviews = await getReviews()
         setProductsList((currentProducts) => currentProducts.map((product) => ({
           ...product,
           reviews: savedReviews
@@ -54,8 +71,18 @@ export default function Home({ cart, setCart, productsList, setProductsList, ord
       }
     }
 
+    const loadOrders = async () => {
+      try {
+        const savedOrders = await fetchOrders()
+        setOrders(Array.isArray(savedOrders) ? savedOrders : [])
+      } catch (error) {
+        console.error('Failed to load orders:', error)
+      }
+    }
+
     loadReviews()
-  }, [setProductsList])
+    loadOrders()
+  }, [setOrders, setProductsList])
 
   const visibleProducts = productsList.filter((product) => {
     const matchesCategory = activeCategory === 'All products' || product.category === activeCategory
@@ -63,13 +90,18 @@ export default function Home({ cart, setCart, productsList, setProductsList, ord
     return matchesCategory && matchesSearch
   })
 
-  // Cart operations
+  
   const addToCart = (productId) => {
     setCart((prev) => {
-      const product = productsList.find((item) => item.id === productId)
-      const currentQuantity = prev[productId] || 0
-      if (!product || (product.stock !== undefined && currentQuantity >= product.stock)) return prev
-      return { ...prev, [productId]: currentQuantity + 1 }
+      const product = productsList.find((item) => Number(item.id) === Number(productId))
+      const safeCart = prev ?? {}
+      const currentQuantity = safeCart[productId] || 0
+      const stockLimit = Number.isFinite(product?.stock) ? Number(product.stock) : null
+
+      if (!product) return safeCart
+      if (stockLimit !== null && stockLimit > 0 && currentQuantity >= stockLimit) return safeCart
+
+      return { ...safeCart, [productId]: currentQuantity + 1 }
     })
   }
 
@@ -85,7 +117,7 @@ export default function Home({ cart, setCart, productsList, setProductsList, ord
     })
   }
 
-  // Handle User Logout
+  
   const handleLogout = async () => {
     try {
       const token = localStorage.getItem('token')
@@ -104,7 +136,7 @@ export default function Home({ cart, setCart, productsList, setProductsList, ord
     }
   }
 
-  // Handle Review Submission
+  
   const handleReviewSubmit = async (productId, e) => {
     e.preventDefault()
     const input = reviewInputs[productId] || { rating: 5, comment: '' }
@@ -120,23 +152,13 @@ export default function Home({ cart, setCart, productsList, setProductsList, ord
     if (!newReview.user_id) return
 
     try {
-      const token = localStorage.getItem('token')
-      const response = await fetch(`${API_BASE_URL}/rating/review/post`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(newReview)
-      })
-      if (!response.ok) throw new Error(await response.text())
-      const savedReview = await response.json()
+      const savedReview = await createReview(newReview)
 
       setProductsList((prev) =>
         prev.map((p) => (p.id === productId ? { ...p, reviews: [...(p.reviews || []), savedReview] } : p))
       )
       
-      // Clear input state
+      
       setReviewInputs((prev) => ({
         ...prev,
         [productId]: { rating: 5, comment: '' }
@@ -168,14 +190,30 @@ export default function Home({ cart, setCart, productsList, setProductsList, ord
     setCancelReasons((currentReasons) => ({ ...currentReasons, [orderId]: reason }))
   }
 
-  const cancelOrder = (order) => {
-    const reason = cancelReasons[order.id]?.trim()
-    if (order.status !== 'Preparing' || !reason) return
-    restoreOrderStock(order)
-    setOrders((currentOrders) => currentOrders.map((currentOrder) => currentOrder.id === order.id
-      ? { ...currentOrder, status: 'Cancelled', cancelReason: reason, inventoryRestored: true }
-      : currentOrder))
-    setCancelReasons((currentReasons) => ({ ...currentReasons, [order.id]: '' }))
+  const cancelOrder = async (order) => {
+    const reason = cancelReasons[order.id]?.trim() || 'Customer cancelled order'
+    const rawId = Number(String(order.id).replace(/[^\d]/g, '')) || Number(order.id)
+    if (!rawId || !reason) return
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/orders/${rawId}/cancel`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to cancel order')
+      }
+
+      restoreOrderStock(order)
+      setOrders((currentOrders) => currentOrders.map((currentOrder) => currentOrder.id === order.id
+        ? { ...currentOrder, status: 'Cancelled', cancelReason: reason, inventoryRestored: true, rawStatus: 'cancelled' }
+        : currentOrder))
+      setCancelReasons((currentReasons) => ({ ...currentReasons, [order.id]: '' }))
+    } catch (error) {
+      console.error('Cancel order failed:', error)
+    }
   }
 
   const returnProduct = (order, productId) => {
@@ -187,7 +225,7 @@ export default function Home({ cart, setCart, productsList, setProductsList, ord
       ? { ...product, stock: (product.stock || 0) + item.quantity }
       : product))
     setOrders((currentOrders) => currentOrders.map((currentOrder) => currentOrder.id === order.id
-      ? { ...currentOrder, products: currentOrder.products.map((orderItem) => orderItem.productId === productId ? { ...orderItem, returnStatus: 'Returned', returnQuantity: orderItem.quantity, returnReason: reason } : orderItem) }
+      ? { ...currentOrder, products: (currentOrder.products || []).map((orderItem) => orderItem.productId === productId ? { ...orderItem, returnStatus: 'Returned', returnQuantity: orderItem.quantity, returnReason: reason } : orderItem) }
       : currentOrder))
   }
 
@@ -289,7 +327,14 @@ export default function Home({ cart, setCart, productsList, setProductsList, ord
               return (
                 <div key={product.id} className="product-card">
                   <div className="product-image-wrap">
-                    <img src={product.image} alt={product.name} />
+                    <img
+                      src={product.image || '/product-placeholder.svg'}
+                      alt={product.name}
+                      onError={(event) => {
+                        event.currentTarget.onerror = null
+                        event.currentTarget.src = '/product-placeholder.svg'
+                      }}
+                    />
                     <span className="badge">{product.tag}</span>
                     <button className="heart-btn" aria-label={`Save ${product.name}`}>♡</button>
                   </div>
@@ -297,7 +342,6 @@ export default function Home({ cart, setCart, productsList, setProductsList, ord
                   <div className="product-meta">
                     <span><strong>{formatCurrency(product.price, currency)}</strong><del>{formatCurrency(product.oldPrice, currency)}</del></span>
                     
-                    {/* Add to Cart / Counter controls */}
                     <div className="cart-control">
                       {qtyInCart > 0 ? (
                         <div className="qty-stepper">
@@ -311,7 +355,6 @@ export default function Home({ cart, setCart, productsList, setProductsList, ord
                     </div>
                   </div>
 
-                  {/* Review Accordion Toggle */}
                   <div className="review-toggle-row">
                     <button 
                       className="review-toggle-btn"
@@ -321,7 +364,6 @@ export default function Home({ cart, setCart, productsList, setProductsList, ord
                     </button>
                   </div>
 
-                  {/* Review Drawer */}
                   {isReviewOpen && (
                     <div className="review-drawer">
                       <h4>Customer Reviews</h4>
@@ -351,21 +393,24 @@ export default function Home({ cart, setCart, productsList, setProductsList, ord
           <div className="section-heading"><div><p className="eyebrow">Your purchases</p><h2>My orders</h2></div><span className="orders-count">{orders.length} {orders.length === 1 ? 'order' : 'orders'}</span></div>
           {orders.length === 0 ? <p className="empty-state">Your orders will appear here after checkout.</p> : <div className="order-sections">
             {[['Preparing', 'New order'], ['Delivered', 'Delivered'], ['Cancelled', 'Canceled']].map(([status, title]) => {
-              const sectionOrders = [...orders].reverse().filter((order) => order.status === status)
+              const sectionOrders = [...orders].reverse().filter((order) => normalizeOrderStatus(order.status || order.rawStatus) === status)
 
               return (
                 <section className="order-status-section" key={status}>
                   <div className="order-section-heading"><h3>{title}</h3><span>{sectionOrders.length}</span></div>
-                  {sectionOrders.length === 0 ? <p className="order-section-empty">No {title.toLowerCase()}s.</p> : <div className="my-orders-list">{sectionOrders.map((order) => <article className="my-order-card" key={order.id}>
-                    <div className="my-order-header"><div><strong>#{order.id}</strong><small>{order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'Recent order'}</small></div><b className={`order-status status-${order.status.toLowerCase()}`}>{order.status}</b></div>
+                  {sectionOrders.length === 0 ? <p className="order-section-empty">No {title.toLowerCase()}s.</p> : <div className="my-orders-list">{sectionOrders.map((order) => {
+                    const currentStatus = normalizeOrderStatus(order.status || order.rawStatus)
+                    return <article className="my-order-card" key={order.id}>
+                    <div className="my-order-header"><div><strong>#{order.id}</strong><small>{order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'Recent order'}</small></div><b className={`order-status status-${currentStatus.toLowerCase()}`}>{currentStatus}</b></div>
                     <div className="my-order-items">{(order.products || []).map((item) => {
                       const reviewKey = `${order.id}-${item.productId}`
                       const isReviewOpen = activeOrderReview === reviewKey
 
-                      return <div key={item.productId} className="my-order-item"><div><span>{item.name} × {item.quantity}</span>{item.returnStatus === 'Returned' && <small className="return-recorded">Returned: {item.returnReason}</small>}</div><div className="order-item-actions">{order.status === 'Delivered' && item.returnStatus !== 'Returned' && <button className="return-button" onClick={() => returnProduct(order, item.productId)}>Return product</button>}{(order.status === 'Delivered' || order.status === 'Cancelled') && <button className="review-order-button" onClick={() => setActiveOrderReview(isReviewOpen ? null : reviewKey)}>{isReviewOpen ? 'Close review' : 'Give review'}</button>}</div>{isReviewOpen && <form className="review-form order-review-form" onSubmit={(event) => { handleReviewSubmit(item.productId, event); setActiveOrderReview(null) }}><select value={reviewInputs[item.productId]?.rating || 5} onChange={(event) => updateReviewInput(item.productId, 'rating', event.target.value)}><option value="5">5 ★★★★★</option><option value="4">4 ★★★★☆</option><option value="3">3 ★★★☆☆</option><option value="2">2 ★★☆☆☆</option><option value="1">1 ★☆☆☆☆</option></select><input type="text" placeholder="Write a review..." value={reviewInputs[item.productId]?.comment || ''} onChange={(event) => updateReviewInput(item.productId, 'comment', event.target.value)} /><button type="submit">Submit</button></form>}</div>
+                      return <div key={item.productId} className="my-order-item"><div><span>{item.name} × {item.quantity}</span>{item.returnStatus === 'Returned' && <small className="return-recorded">Returned: {item.returnReason}</small>}</div><div className="order-item-actions">{currentStatus === 'Delivered' && item.returnStatus !== 'Returned' && <button className="return-button" onClick={() => returnProduct(order, item.productId)}>Return product</button>}{(currentStatus === 'Delivered' || currentStatus === 'Cancelled') && <button className="review-order-button" onClick={() => setActiveOrderReview(isReviewOpen ? null : reviewKey)}>{isReviewOpen ? 'Close review' : 'Give review'}</button>}</div>{isReviewOpen && <form className="review-form order-review-form" onSubmit={(event) => { handleReviewSubmit(item.productId, event); setActiveOrderReview(null) }}><select value={reviewInputs[item.productId]?.rating || 5} onChange={(event) => updateReviewInput(item.productId, 'rating', event.target.value)}><option value="5">5 ★★★★★</option><option value="4">4 ★★★★☆</option><option value="3">3 ★★★☆☆</option><option value="2">2 ★★☆☆☆</option><option value="1">1 ★☆☆☆☆</option></select><input type="text" placeholder="Write a review..." value={reviewInputs[item.productId]?.comment || ''} onChange={(event) => updateReviewInput(item.productId, 'comment', event.target.value)} /><button type="submit">Submit</button></form>}</div>
                     })}</div>
-                    <div className="my-order-footer"><strong>{formatCurrency(order.total, currency)}</strong>{order.status === 'Preparing' && <div className="cancel-order-actions"><input value={cancelReasons[order.id] || ''} onChange={(event) => updateCancelReason(order.id, event.target.value)} placeholder="Cancellation reason" aria-label={`Cancellation reason for order ${order.id}`} /><button className="cancel-order-button" onClick={() => cancelOrder(order)} disabled={!cancelReasons[order.id]?.trim()}>Cancel order</button></div>}{order.status === 'Cancelled' && <span className="order-note">Cancelled: {order.cancelReason || 'Reason not provided'}</span>}</div>
-                  </article>)}</div>}
+                    <div className="my-order-footer"><strong>{formatCurrency(order.total ?? order.amount ?? 0, currency)}</strong>{currentStatus === 'Preparing' && <div className="cancel-order-actions"><input value={cancelReasons[order.id] || ''} onChange={(event) => updateCancelReason(order.id, event.target.value)} placeholder="Cancellation reason" aria-label={`Cancellation reason for order ${order.id}`} /><button className="cancel-order-button" onClick={() => cancelOrder(order)}>Cancel order</button></div>}{currentStatus === 'Cancelled' && <span className="order-note">Cancelled: {order.cancelReason || 'Reason not provided'}</span>}</div>
+                  </article>
+                  })}</div>}
                 </section>
               )
             })}

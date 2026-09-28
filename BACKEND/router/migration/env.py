@@ -1,5 +1,5 @@
+
 import asyncio
-import sys
 from logging.config import fileConfig
 
 from alembic import context
@@ -8,6 +8,8 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel import SQLModel
 
 from API.home.core.config import settings
+
+                                                                
 from MODELS import (
     cart,
     cart_item,
@@ -22,29 +24,56 @@ from MODELS import (
     user,
 )
 
+                       
 config = context.config
 
+                                           
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
+                   
 target_metadata = SQLModel.metadata
 
 
 def get_db_url() -> str:
+    """
+    Get the database URL from application settings
+    and make sure it uses the asyncpg driver.
+    """
     url = str(settings.DATABASE_URL)
+
     if url.startswith("postgresql://"):
-        url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        url = url.replace(
+            "postgresql://",
+            "postgresql+asyncpg://",
+            1,
+        )
+
+    elif url.startswith("postgres://"):
+        url = url.replace(
+            "postgres://",
+            "postgresql+asyncpg://",
+            1,
+        )
+
     return url
 
 
 def run_migrations_offline() -> None:
-    """Run migrations in 'offline' mode."""
+    """
+    Run migrations in offline mode.
+    """
     url = get_db_url()
+
     context.configure(
         url=url,
         target_metadata=target_metadata,
         literal_binds=True,
-        dialect_opts={"paramstyle": "named"},
+        dialect_opts={
+            "paramstyle": "named"
+        },
+        compare_type=True,
+        compare_server_default=True,
     )
 
     with context.begin_transaction():
@@ -52,43 +81,51 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection) -> None:
-    context.configure(connection=connection, target_metadata=target_metadata)
+    """
+    Run migrations using an existing database connection.
+    """
+    context.configure(
+        connection=connection,
+        target_metadata=target_metadata,
+        compare_type=True,
+        compare_server_default=True,
+    )
 
     with context.begin_transaction():
         context.run_migrations()
 
 
 async def run_async_migrations() -> None:
-    """Run migrations in 'online' mode."""
-    db_url = get_db_url()
+    """
+    Run migrations using an async SQLAlchemy engine.
+    """
+    database_url = get_db_url()
 
     connectable = create_async_engine(
-        db_url,
+        database_url,
         poolclass=pool.NullPool,
     )
 
-    async with connectable.connect() as connection:
-        await connection.run_sync(do_run_migrations)
-
-    await connectable.dispose()
+    try:
+        async with connectable.connect() as connection:
+            await connection.run_sync(
+                do_run_migrations
+            )
+    finally:
+        await connectable.dispose()
 
 
 def run_migrations_online() -> None:
-    """Run migrations in 'online' mode with safe event loop handling."""
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = None
-
-    if loop and loop.is_running():
-        # If an event loop is already running, schedule the task on it
-        task = loop.create_task(run_async_migrations())
-    else:
-        # Standard execution path
-        asyncio.run(run_async_migrations())
+    """
+    Run migrations in online mode.
+    """
+    asyncio.run(
+        run_async_migrations()
+    )
 
 
 if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
+

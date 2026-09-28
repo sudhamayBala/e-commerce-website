@@ -1,21 +1,21 @@
 from datetime import datetime
-from typing import List, Optional, TYPE_CHECKING
-from pydantic import ConfigDict
+from typing import Optional
+from builtins import int, str
+from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
-from sqlmodel import SQLModel
 
 
-class CategoryCreate(SQLModel):
-    name: str
-    description: Optional[str] = None
+class CategoryCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+    description: Optional[str] = Field(default=None, max_length=1000)
 
 
-class CategoryUpdate(SQLModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
+class CategoryUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    description: Optional[str] = Field(None, max_length=1000)
 
 
-class CategoryRead(SQLModel):
+class CategoryRead(BaseModel):
     id: int
     name: str
     description: Optional[str] = None
@@ -26,8 +26,3 @@ class CategoryRead(SQLModel):
         populate_by_name=True,
         from_attributes=True,
     )
-
-
-class CategoryPublic(SQLModel):
-    id: int
-    name: str

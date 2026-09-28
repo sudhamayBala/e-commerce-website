@@ -1,4 +1,3 @@
-
 from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum
@@ -23,45 +22,45 @@ class OrderStatus(str, Enum):
 class Order(SQLModel, table=True):
     __tablename__ = "orders"
 
-    # Primary Key
+                 
     id: Optional[int] = Field(
         default=None,
         primary_key=True
     )
 
-    # Order Details
+                   
     total_price: Decimal = Field(
         default=Decimal("0.00"),
         max_digits=10,
         decimal_places=2
     )
 
-    customer_name: str
-    customer_id: str
-    shipping_address: str
-    product_type: str
+    customer_name: Optional[str] = Field(default=None)
+    customer_id: Optional[str] = Field(default=None)
+    shipping_address: Optional[str] = Field(default=None)
+    product_type: Optional[str] = Field(default=None)
 
-    # Order Status
+                  
     status: OrderStatus = Field(
         default=OrderStatus.PENDING
     )
 
-    # Cancellation
+                  
     user_cancellation: bool = Field(
         default=False
     )
 
-    # Date
+          
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None)
     )
 
-    # Foreign Key
+                 
     user_id: int = Field(
         foreign_key="users.id"
     )
 
-    # Relationships
+                   
     user: "User" = Relationship(
         back_populates="orders"
     )
@@ -74,15 +73,14 @@ class Order(SQLModel, table=True):
         back_populates="order"
     )
 
-    # Payment Information
+                         
     payment_status: bool = Field(
         default=False
     )
 
-    payment_method: str
+    payment_method: Optional[str] = Field(default=None)
 
     refunded: bool = Field(
         default=False,
         index=True
     )
-

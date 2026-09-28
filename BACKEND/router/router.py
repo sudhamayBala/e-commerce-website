@@ -7,9 +7,9 @@ from API.home.DB.MODELS.schemas.ChangePassword import ChangePasswordSchema
 from service.user import change_password
 
 
-#api_router=APIRouter(prefix="/api",tags=["API"],dependencies=[Depends(Verify_Password)]) 
+                                                                                          
 api_router=APIRouter(prefix="/api",tags=["API"])
-@api_router.get("/main",tags=["API_ROUTER"])
+@api_router.get("/face_order",tags=["API_ROUTER"])
 async def health_check():
     return {"massage":"The api  is working"}
 
@@ -20,11 +20,11 @@ async def say_hi ():
 
 
 
-@api_router.post("/orders")
+@api_router.post("/create_order")
 async def create_order():
 
-    # Your existing order creation logic
-    # order = ...
+                                        
+                 
 
     context = {
         "username": "Sudhamay",
@@ -46,8 +46,8 @@ async def create_order():
         context
     )
 
-    # Later:
-    # send html_content through your email service
+            
+                                                  
 
     return {
         "message": "Order created successfully"

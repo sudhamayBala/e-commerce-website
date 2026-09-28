@@ -1,0 +1,15 @@
+from API.home.payment import create_checkout_session
+
+
+def test_create_checkout_session_without_stripe_key_returns_demo_checkout():
+    result = create_checkout_session(
+        items=[{"name": "Test Product", "quantity": 2, "price": 25.0}],
+        customer_email="demo@example.com",
+        success_url="http://localhost:5173/success",
+        cancel_url="http://localhost:5173/cart",
+        stripe_secret_key="",
+    )
+
+    assert result["provider"] == "demo"
+    assert result["checkout_url"].startswith("http://localhost:5173")
+    assert result["amount_total"] == 50.0

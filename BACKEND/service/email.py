@@ -36,7 +36,7 @@ async def send_welcome_email(email:str,name:str):
         print(f"Error sending welcome email out:{e}")
 
 
-# BACKEND/service/email.py
+                          
 
 from pathlib import Path
 
@@ -46,9 +46,9 @@ from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
 from pydantic import EmailStr
 
 
-# ---------------------------------------------------------
-# Template configuration
-# ---------------------------------------------------------
+                                                           
+                        
+                                                           
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -59,9 +59,9 @@ env = Environment(
 )
 
 
-# ---------------------------------------------------------
-# Email configuration
-# ---------------------------------------------------------
+                                                           
+                     
+                                                           
 
 conf = ConnectionConfig(
     MAIL_USERNAME="your_email@gmail.com",
@@ -76,9 +76,9 @@ conf = ConnectionConfig(
 )
 
 
-# ---------------------------------------------------------
-# Render email template
-# ---------------------------------------------------------
+                                                           
+                       
+                                                           
 
 def render_email(template_name: str, **context) -> str:
     """
@@ -97,9 +97,9 @@ def render_email(template_name: str, **context) -> str:
         )
 
 
-# ---------------------------------------------------------
-# Send email
-# ---------------------------------------------------------
+                                                           
+            
+                                                           
 
 async def send_email(
     recipient: EmailStr,
@@ -132,9 +132,9 @@ async def send_email(
     }
 
 
-# ---------------------------------------------------------
-# Get email datetime
-# ---------------------------------------------------------
+                                                           
+                    
+                                                           
 
 def get_email_datetime():
     """
