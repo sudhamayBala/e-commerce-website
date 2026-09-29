@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     SECRETE_JWT_KEY: str = ""
     ACCESS_TOKEN_EXPIRE_DAYS: int = 7
 
-    FRONTEND_URL: str = "https://e-commerce-website-od8p.onrender.com"
+    FRONTEND_URL: str = "https://e-commerce-website-sluq.vercel.app"
     BACKEND_URL: str = "https://e-commerce-website-od8p.onrender.com"
 
     model_config = SettingsConfigDict(
