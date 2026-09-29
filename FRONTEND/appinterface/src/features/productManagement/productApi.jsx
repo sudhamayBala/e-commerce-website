@@ -1,6 +1,5 @@
 import axios from 'axios'
-
-const API_BASE_URL = 'https://e-commerce-website-od8p.onrender.com'
+import { API_BASE_URL } from '../../api.jsx'
 
 const PRODUCT_URL = `${API_BASE_URL}/product`
 const CATEGORY_URL = `${API_BASE_URL}/category`

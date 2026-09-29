@@ -3,16 +3,18 @@ from typing import Any, Dict, List, Optional
 
 import stripe
 from fastapi import APIRouter, HTTPException
+from API.home.core.config import settings
 
 
 payment_router = APIRouter(prefix="/payment", tags=["payment"])
+FRONTEND_URL = settings.FRONTEND_URL.rstrip("/")
 
 
 def create_checkout_session(
     items: List[Dict[str, Any]],
     customer_email: str = "",
-    success_url: str = "https://e-commerce-website-od8p.onrender.com/home",
-    cancel_url: str = "https://e-commerce-website-od8p.onrender.com/cart",
+    success_url: str = f"{FRONTEND_URL}/home",
+    cancel_url: str = f"{FRONTEND_URL}/cart",
     stripe_secret_key: Optional[str] = None,
 ) -> Dict[str, Any]:
     if not items:
@@ -73,8 +75,8 @@ async def create_checkout_session_endpoint(payload: dict):
     try:
         items = payload.get("items", [])
         customer_email = payload.get("customer_email", "")
-        success_url = payload.get("success_url", "https://e-commerce-website-od8p.onrender.com/home")
-        cancel_url = payload.get("cancel_url", "https://e-commerce-website-od8p.onrender.com/cart")
+        success_url = payload.get("success_url", f"{FRONTEND_URL}/home")
+        cancel_url = payload.get("cancel_url", f"{FRONTEND_URL}/cart")
         stripe_secret_key = payload.get("stripe_secret_key")
 
         if not items:

@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-
-const  API_BASE_URL  = "https://e-commerce-website-od8p.onrender.com";
+import { API_BASE_URL } from '../../api.jsx';
 
 export async function createReview(reviewPayload) {
   try {

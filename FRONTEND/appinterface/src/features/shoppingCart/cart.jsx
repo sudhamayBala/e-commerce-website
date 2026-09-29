@@ -4,9 +4,7 @@ import { CircleMarker, MapContainer, TileLayer, useMap, useMapEvents } from 'rea
 import '../../css/RegisterLogin/Home.css'
 import 'leaflet/dist/leaflet.css'
 import { formatCurrency, getStoreSettings } from '../../sharedData/storeSettings'
-
-
-const  API_BASE_URL  = "https://e-commerce-website-od8p.onrender.com";
+import { API_BASE_URL } from '../../api.jsx'
 function MapClickHandler({ onLocationSelect }) {
   useMapEvents({
     click: async ({ latlng }) => {

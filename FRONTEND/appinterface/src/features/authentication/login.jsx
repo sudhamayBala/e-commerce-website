@@ -3,9 +3,7 @@ import axios from "axios";
 import "../../css/App.css";
 import "../../css/RegisterLogin/Login.css";
 import { useNavigate } from "react-router-dom";
-
-
-const  API_BASE_URL  = "https://e-commerce-website-od8p.onrender.com";
+import { API_BASE_URL } from "../../api.jsx";
 
 const normalizeUserRole = (value) => {
     const normalized = String(value ?? "")

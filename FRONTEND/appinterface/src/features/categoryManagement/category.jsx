@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
+import { API_BASE_URL } from '../../api.jsx'
 
-const  API_BASE_URL  = "https://e-commerce-website-od8p.onrender.com";
 const CATEGORY_URL = `${API_BASE_URL}/category`
 
 const emptyCategory = {

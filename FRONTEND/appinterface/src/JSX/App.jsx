@@ -8,9 +8,7 @@ import '../css/App.css'
 import { useEffect, useState } from 'react'
 import { getProducts } from '../api/product/getProducts'
 import { getUserCart, saveUserCart } from '../api/cart'
-
-
-const  API_BASE_URL  = "https://e-commerce-website-od8p.onrender.com";
+import { API_BASE_URL } from '../api.jsx'
 
 const normalizeUserRole = (value) => {
   const normalized = String(value ?? '').trim().toLowerCase()

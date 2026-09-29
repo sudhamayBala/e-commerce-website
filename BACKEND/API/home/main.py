@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 from builtins import Exception, print, str
+from pathlib import Path
 
 from API.auth.auth import auth_router as auth_router
 import stripe
@@ -124,16 +125,18 @@ app = FastAPI(
 )
 
 
+STATIC_DIR = Path(__file__).resolve().parents[2] / "static"
+
 app.mount(
     "/static",
-    StaticFiles(directory="static"),
+    StaticFiles(directory=STATIC_DIR),
     name="static"
 )
 
 
 app.add_middleware(
     CORSMiddleware, 
-    allow_origin_regex=r"https://.*\.vercel\.app",
+    allow_origin_regex=r"https://e-commerce-website-sluq(?:-[a-z0-9-]+)?\.vercel\.app",
     allow_origins=[
         settings.FRONTEND_URL,
         
@@ -194,10 +197,16 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    return {
-        "status": "healthy",
-        "database": "connected",
-    }
+    try:
+        async with engine.connect() as connection:
+            await connection.execute(text("SELECT 1"))
+    except Exception:
+        return JSONResponse(
+            status_code=503,
+            content={"status": "unhealthy", "database": "disconnected"},
+        )
+
+    return {"status": "healthy", "database": "connected"}
 
 
 app.include_router(api_router)

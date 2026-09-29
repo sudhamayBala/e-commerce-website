@@ -1,6 +1,7 @@
 import os
 import shutil
 import uuid
+from pathlib import Path
 from typing import List, Optional
 from decimal import Decimal
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
@@ -22,7 +23,7 @@ product_router = APIRouter(
 )
 
                                             
-UPLOAD_DIR = "static/uploads"
+UPLOAD_DIR = Path(__file__).resolve().parents[2] / "static" / "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
@@ -85,7 +86,7 @@ async def create_product(
                                                             
     file_extension = os.path.splitext(file.filename)[1]
     unique_filename = f"{uuid.uuid4()}{file_extension}"
-    file_path = os.path.join(UPLOAD_DIR, unique_filename)
+    file_path = UPLOAD_DIR / unique_filename
 
     try:
         with open(file_path, "wb") as buffer:
@@ -219,7 +220,7 @@ async def update_product(
     if file and file.filename:
         file_extension = os.path.splitext(file.filename)[1]
         unique_filename = f"{uuid.uuid4()}{file_extension}"
-        file_path = os.path.join(UPLOAD_DIR, unique_filename)
+        file_path = UPLOAD_DIR / unique_filename
 
         try:
             with open(file_path, "wb") as buffer:
@@ -227,7 +228,7 @@ async def update_product(
             
                                           
             if db_product.image_url:
-                old_file_path = os.path.join(UPLOAD_DIR, db_product.image_url)
+                old_file_path = UPLOAD_DIR / db_product.image_url
                 if os.path.exists(old_file_path):
                     os.remove(old_file_path)
 
@@ -257,9 +258,7 @@ async def delete_product(
     product_id: int,
     db: AsyncSession = Depends(get_db),
 ):
-    db_product = await db.get(Product, db_product_id if 'db_product_id' in locals() else product_id)
-    if not db_product:
-        db_product = await db.get(Product, product_id)
+    db_product = await db.get(Product, product_id)
     if not db_product:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

@@ -11,6 +11,7 @@ import { getProducts } from '../../api/product/getProducts'
 import { updateProduct } from '../../api/product/updateProduct'
 import { createCategory } from '../../api/category/createCategory'
 import { getCategories } from '../../api/category/getCategories'
+import { API_BASE_URL } from '../../api.jsx'
 
 export default function Owner({ products, setProducts, orders, setOrders }) {
   const navigate = useNavigate()
@@ -155,8 +156,6 @@ export default function Owner({ products, setProducts, orders, setOrders }) {
     const soldUnits = filteredMonthlyOrders.reduce((total, order) => total + ((order.products || [])
       .filter((item) => item.productId === product.id && matchesAnalyticsFilter(order, item))
       .reduce((sum, item) => {
-        const unitSellingPrice = Number(item.unitSellingPrice ?? item.unit_selling_price ?? item.selling_price ?? product.selling_price ?? product.price ?? 0)
-        const unitCostPrice = Number(item.unitCostPrice ?? item.unit_cost_price ?? item.cost_price ?? product.cost_price ?? 0)
         return sum + Number(item.quantity || 0)
       }, 0)), 0)
     const totalProfit = filteredMonthlyOrders.reduce((total, order) => total + ((order.products || [])
@@ -346,7 +345,7 @@ export default function Owner({ products, setProducts, orders, setOrders }) {
         ...createdProduct,
         image: createdProduct.image_url.startsWith('http') || createdProduct.image_url.startsWith('data:')
           ? createdProduct.image_url
-          : `${import.meta.env.VITE_API_URL || "https://e-commerce-website-od8p.onrender.com"}/static/uploads/${createdProduct.image_url}`,
+          : `${API_BASE_URL}/static/uploads/${createdProduct.image_url}`,
       }
       setProducts((current) => {
         const productId = savedProduct.id || savedProduct.product_id
