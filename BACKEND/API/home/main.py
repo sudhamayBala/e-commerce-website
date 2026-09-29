@@ -135,7 +135,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         settings.FRONTEND_URL,
-        "https://e-commerce-website-sluq-1xctska74-sudha19.vercel.app/login",
+        "https://e-commerce-website-sluq.vercel.app/login",
         "https://e-commerce-website-od8p.onrender.com",
         "http://localhost:3000",
         "http://localhost:5173",
