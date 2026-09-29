@@ -346,7 +346,7 @@ export default function Owner({ products, setProducts, orders, setOrders }) {
         ...createdProduct,
         image: createdProduct.image_url.startsWith('http') || createdProduct.image_url.startsWith('data:')
           ? createdProduct.image_url
-          : `${import.meta.env.VITE_API_URL || 'http://127.0.0.1:2026'}/static/uploads/${createdProduct.image_url}`,
+          : `${import.meta.env.VITE_API_URL || "https://e-commerce-website-od8p.onrender.com"}/static/uploads/${createdProduct.image_url}`,
       }
       setProducts((current) => {
         const productId = savedProduct.id || savedProduct.product_id

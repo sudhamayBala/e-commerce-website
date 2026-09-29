@@ -13,8 +13,8 @@ class Settings(BaseSettings):
     SECRETE_JWT_KEY: str = ""
     ACCESS_TOKEN_EXPIRE_DAYS: int = 7
 
-    FRONTEND_URL: str = "http://localhost:3000"
-    BACKEND_URL: str = "http://127.0.0.1:2026"
+    FRONTEND_URL: str = "https://e-commerce-website-od8p.onrender.com"
+    BACKEND_URL: str = "https://e-commerce-website-od8p.onrender.com"
 
     model_config = SettingsConfigDict(
         env_file=ENV_PATH,

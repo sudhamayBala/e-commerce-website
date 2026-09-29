@@ -6,9 +6,11 @@ import Owner from '../pages/owner'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import '../css/App.css'
 import { useEffect, useState } from 'react'
-import { API_BASE_URL } from '../api'
 import { getProducts } from '../api/product/getProducts'
 import { getUserCart, saveUserCart } from '../api/cart'
+
+
+const  API_BASE_URL  = "https://e-commerce-website-od8p.onrender.com";
 
 const normalizeUserRole = (value) => {
   const normalized = String(value ?? '').trim().toLowerCase()

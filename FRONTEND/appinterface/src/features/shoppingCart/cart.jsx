@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { CircleMarker, MapContainer, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import '../../css/RegisterLogin/Home.css'
 import 'leaflet/dist/leaflet.css'
-import { API_BASE_URL } from '../../api'
 import { formatCurrency, getStoreSettings } from '../../sharedData/storeSettings'
 
+
+const  API_BASE_URL  = "https://e-commerce-website-od8p.onrender.com";
 function MapClickHandler({ onLocationSelect }) {
   useMapEvents({
     click: async ({ latlng }) => {

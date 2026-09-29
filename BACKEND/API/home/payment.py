@@ -11,8 +11,8 @@ payment_router = APIRouter(prefix="/payment", tags=["payment"])
 def create_checkout_session(
     items: List[Dict[str, Any]],
     customer_email: str = "",
-    success_url: str = "http://localhost:5173/home",
-    cancel_url: str = "http://localhost:5173/cart",
+    success_url: str = "https://e-commerce-website-od8p.onrender.com/home",
+    cancel_url: str = "https://e-commerce-website-od8p.onrender.com/cart",
     stripe_secret_key: Optional[str] = None,
 ) -> Dict[str, Any]:
     if not items:
@@ -73,8 +73,8 @@ async def create_checkout_session_endpoint(payload: dict):
     try:
         items = payload.get("items", [])
         customer_email = payload.get("customer_email", "")
-        success_url = payload.get("success_url", "http://localhost:5173/home")
-        cancel_url = payload.get("cancel_url", "http://localhost:5173/cart")
+        success_url = payload.get("success_url", "https://e-commerce-website-od8p.onrender.com/home")
+        cancel_url = payload.get("cancel_url", "https://e-commerce-website-od8p.onrender.com/cart")
         stripe_secret_key = payload.get("stripe_secret_key")
 
         if not items:

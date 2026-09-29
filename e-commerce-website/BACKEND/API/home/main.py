@@ -116,12 +116,11 @@ app.add_middleware(
 
     allow_origins=[
         settings.FRONTEND_URL,
-        "http://localhost:9433",
+        "https://e-commerce-website-od8p.onrender.com",
+        "http://localhost:3000",
+        "http://localhost:5173",
         "http://127.0.0.1:3000",
         "http://127.0.0.1:5173",
-        "http://localhost:5173",
-        "http://127.0.0.1:9433",
-        "http://localhost:4173",
     ],
 
     allow_credentials=True,

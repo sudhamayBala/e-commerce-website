@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import "../../css/RegisterLogin/Home.css";
 import { categories } from '../../sharedData/products'
 import photo from './image/ChatGPT Image Sep 13, 2026, 11_20_06 AM.png'
-import { API_BASE_URL } from '../../api'
 import { formatCurrency, getStoreSettings } from '../../sharedData/storeSettings'
 import { createReview } from '../../api/review/createReview'
 import { getReviews } from '../../api/review/getReviews'
 
+
+const  API_BASE_URL  = "https://e-commerce-website-od8p.onrender.com";
 const normalizeOrderStatus = (status) => {
   const value = String(status || '').toLowerCase()
   if (['pending', 'processing'].includes(value)) return 'Preparing'
