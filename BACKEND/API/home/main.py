@@ -132,10 +132,11 @@ app.mount(
 
 
 app.add_middleware(
-    CORSMiddleware,
+    CORSMiddleware, 
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_origins=[
         settings.FRONTEND_URL,
-        "https://e-commerce-website-sluq.vercel.app/login",
+        
         "https://e-commerce-website-od8p.onrender.com",
         "http://localhost:3000",
         "http://localhost:5173",
